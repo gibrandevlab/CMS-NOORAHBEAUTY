@@ -1,0 +1,37 @@
+<div class="admin-layout">
+  <header class="admin-header">
+    <a routerLink="/admin/dashboard" class="brand">GOBANA COMPANY</a>
+    <a routerLink="/login" class="logout">Logout</a>
+  </header>
+
+  <aside class="admin-sidebar">
+    <nav>
+      <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-link">
+        Dashboard
+      </a>
+
+      <div class="nav-section">Master</div>
+      <a routerLink="/admin/kategori-jasa" routerLinkActive="active" class="nav-link">
+        Kategori Jasa
+      </a>
+      <a routerLink="/admin/jasa" routerLinkActive="active" class="nav-link">
+        Jasa
+      </a>
+      <a routerLink="/admin/berita" routerLinkActive="active" class="nav-link">
+        Berita
+      </a>
+      <a routerLink="/admin/vendor" routerLinkActive="active" class="nav-link">
+        Vendor
+      </a>
+
+      <div class="nav-section">Konten</div>
+      <a routerLink="/admin/tentang-kami" routerLinkActive="active" class="nav-link">
+        Tentang Kami
+      </a>
+    </nav>
+  </aside>
+
+  <main class="admin-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>

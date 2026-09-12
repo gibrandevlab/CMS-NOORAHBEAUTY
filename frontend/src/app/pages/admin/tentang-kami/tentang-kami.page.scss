@@ -1,0 +1,21 @@
+@use '../shared/admin-crud-page.scss';
+
+.editor-form {
+  display: grid;
+  gap: 8px;
+  max-width: 800px;
+}
+
+.editor-form label {
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+.editor-form input,
+.editor-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font: inherit;
+}

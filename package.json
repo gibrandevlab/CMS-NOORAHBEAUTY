@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@popperjs/core": "^2.11.8",
+    "admin-lte": "^4.9.1",
+    "bootstrap": "^5.3.8"
+  }
+}
