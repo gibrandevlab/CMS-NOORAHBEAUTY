@@ -3,6 +3,28 @@
   min-width: 0;
 }
 
+ion-icon {
+  vertical-align: middle;
+}
+
+.icon-spin {
+  animation: icon-spin 1s linear infinite;
+}
+
+.empty-news-icon {
+  font-size: 3rem;
+}
+
+@keyframes icon-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .page-heading {
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   padding-bottom: 1rem;

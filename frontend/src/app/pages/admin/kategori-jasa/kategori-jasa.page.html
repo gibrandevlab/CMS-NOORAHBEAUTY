@@ -20,11 +20,11 @@
       [disabled]="loading || refreshing"
       title="Perbarui Data"
     >
-      <i class="fas fa-sync-alt" [class.fa-spin]="loading || refreshing"></i>
+      <ion-icon name="refresh-outline" [class.icon-spin]="loading || refreshing" aria-hidden="true"></ion-icon>
       {{ loading ? 'Memuat...' : refreshing ? 'Memperbarui...' : 'Perbarui' }}
     </button>
     <button type="button" class="primary-button" (click)="openCreateModal()">
-      <i class="fas fa-plus"></i> Tambah Kategori
+      <ion-icon name="add-outline" aria-hidden="true"></ion-icon> Tambah Kategori
     </button>
   </div>
 </section>
@@ -32,7 +32,7 @@
 <!-- Error Banner -->
 <div *ngIf="errorMessage" class="error-banner" role="alert">
   <div class="error-content">
-    <i class="fas fa-exclamation-triangle error-icon"></i>
+    <ion-icon name="alert-circle-outline" class="error-icon" aria-hidden="true"></ion-icon>
     <span>{{ errorMessage }}</span>
   </div>
   <button type="button" class="retry-btn" (click)="loadCategories()">Coba Lagi</button>
@@ -41,7 +41,7 @@
 <!-- Controls Panel: Search & Page Size -->
 <section class="controls-panel">
   <div class="search-box">
-    <i class="fas fa-search search-icon"></i>
+    <ion-icon name="search-outline" class="search-icon" aria-hidden="true"></ion-icon>
     <input
       type="text"
       class="search-input"
@@ -50,7 +50,7 @@
       (ngModelChange)="onSearchChange()"
     />
     <button *ngIf="searchQuery" class="clear-search" (click)="searchQuery = ''; onSearchChange()">
-      <i class="fas fa-times"></i>
+      <ion-icon name="close-outline" aria-hidden="true"></ion-icon>
     </button>
   </div>
 
@@ -127,7 +127,7 @@
                 (click)="openEditModal(cat)"
                 title="Edit Kategori"
               >
-                <i class="fas fa-edit"></i>
+                <ion-icon name="create-outline" aria-hidden="true"></ion-icon>
               </button>
               <button
                 type="button"
@@ -135,7 +135,7 @@
                 (click)="confirmDelete(cat)"
                 title="Hapus Kategori"
               >
-                <i class="fas fa-trash-alt"></i>
+                <ion-icon name="trash-outline" aria-hidden="true"></ion-icon>
               </button>
             </div>
           </td>
@@ -144,7 +144,7 @@
         <!-- Empty State -->
         <tr *ngIf="paginatedCategories.length === 0">
           <td colspan="5" class="empty-state">
-            <i class="fas fa-folder-open empty-icon"></i>
+            <ion-icon name="folder-open-outline" class="empty-icon" aria-hidden="true"></ion-icon>
             <p>
               {{ searchQuery ? 'Tidak ada kategori yang cocok dengan pencarian.' : 'Belum ada data kategori jasa.' }}
             </p>
@@ -177,7 +177,7 @@
         [disabled]="currentPage === 1"
         (click)="goToPage(currentPage - 1)"
       >
-        <i class="fas fa-chevron-left"></i>
+        <ion-icon name="chevron-back-outline" aria-hidden="true"></ion-icon>
       </button>
       <span class="page-current">{{ currentPage }} / {{ totalPages }}</span>
       <button
@@ -186,7 +186,7 @@
         [disabled]="currentPage === totalPages"
         (click)="goToPage(currentPage + 1)"
       >
-        <i class="fas fa-chevron-right"></i>
+        <ion-icon name="chevron-forward-outline" aria-hidden="true"></ion-icon>
       </button>
     </div>
   </div>
@@ -198,7 +198,7 @@
     <div class="modal-header">
       <h2>{{ isEditing ? 'Edit Kategori Jasa' : 'Tambah Kategori Jasa' }}</h2>
       <button type="button" class="btn-close" (click)="closeModal()">
-        <i class="fas fa-times"></i>
+        <ion-icon name="close-outline" aria-hidden="true"></ion-icon>
       </button>
     </div>
 
@@ -250,7 +250,7 @@
           Batal
         </button>
         <button type="submit" class="btn-primary" [disabled]="submitting">
-          <i *ngIf="submitting" class="fas fa-spinner fa-spin mr-1"></i>
+          <ion-icon *ngIf="submitting" name="refresh-outline" class="icon-spin mr-1" aria-hidden="true"></ion-icon>
           {{ submitting ? 'Menyimpan...' : isEditing ? 'Simpan Perubahan' : 'Tambah Kategori' }}
         </button>
       </div>
