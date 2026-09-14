@@ -1,35 +1,55 @@
-<div class="admin-layout">
+<div class="admin-layout" [class.sidebar-open]="isSidebarOpen">
   <header class="admin-header">
-    <a routerLink="/admin/dashboard" class="brand">GOBANA COMPANY</a>
-    <a routerLink="/login" class="logout">Logout</a>
+    <div class="header-left">
+      <!-- Tombol toggle untuk mobile -->
+      <button
+        type="button"
+        class="mobile-toggle"
+        aria-label="Buka menu navigasi"
+        (click)="toggleSidebar()"
+      >
+      </button>
+      <a routerLink="/admin/dashboard" class="brand">GOBANA COMPANY</a>
+    </div>
+
+    <button type="button" class="logout-btn" (click)="logout()">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </button>
   </header>
 
-  <aside class="admin-sidebar">
+  <!-- Sidebar Menu -->
+  <aside class="admin-sidebar" [class.open]="isSidebarOpen">
+    <div class="sidebar-brand-mobile">
+      <span class="brand text-white">GOBANA COMPANY</span>
+    </div>
     <nav>
       <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-link">
-        Dashboard
+        <i class="fas fa-home nav-icon"></i> <span>Dashboard</span>
       </a>
 
       <div class="nav-section">Master</div>
       <a routerLink="/admin/kategori-jasa" routerLinkActive="active" class="nav-link">
-        Kategori Jasa
+        <i class="fas fa-tags nav-icon"></i> <span>Kategori Jasa</span>
       </a>
       <a routerLink="/admin/jasa" routerLinkActive="active" class="nav-link">
-        Jasa
+        <i class="fas fa-briefcase nav-icon"></i> <span>Jasa</span>
       </a>
       <a routerLink="/admin/berita" routerLinkActive="active" class="nav-link">
-        Berita
+        <i class="fas fa-newspaper nav-icon"></i> <span>Berita</span>
       </a>
       <a routerLink="/admin/vendor" routerLinkActive="active" class="nav-link">
-        Vendor
+        <i class="fas fa-building nav-icon"></i> <span>Vendor</span>
       </a>
 
       <div class="nav-section">Konten</div>
       <a routerLink="/admin/tentang-kami" routerLinkActive="active" class="nav-link">
-        Tentang Kami
+        <i class="fas fa-info-circle nav-icon"></i> <span>Tentang Kami</span>
       </a>
     </nav>
   </aside>
+
+  <!-- Overlay background saat sidebar terbuka di mobile -->
+  <div class="sidebar-overlay" *ngIf="isSidebarOpen" (click)="toggleSidebar()"></div>
 
   <main class="admin-content">
     <router-outlet></router-outlet>

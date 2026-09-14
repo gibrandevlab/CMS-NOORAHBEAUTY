@@ -8,10 +8,10 @@ exports.login = async (req, res) => {
     const { username, password } = req.body;
 
     // Validasi input
-    if (!username || username.trim() === '') {
+    if (typeof username !== 'string' || username.trim() === '' || username.length > 50) {
       return res.status(400).json({ success: false, message: 'Username wajib diisi' });
     }
-    if (!password || password.trim() === '') {
+    if (typeof password !== 'string' || password.trim() === '' || password.length > 255) {
       return res.status(400).json({ success: false, message: 'Password wajib diisi' });
     }
 

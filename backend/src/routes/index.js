@@ -28,12 +28,13 @@ router.use('/news', newsRoutes);
 router.use('/vendors', vendorRoutes);
 router.use('/about', aboutUsRoutes);
 
-// Admin Protected Routes (Menggunakan authMiddleware)
-router.use('/admin/dashboard', authMiddleware, dashboardRoutes);
-router.use('/admin/categories', authMiddleware, categoryRoutes);
-router.use('/admin/products', authMiddleware, productRoutes);
-router.use('/admin/news', authMiddleware, newsRoutes);
-router.use('/admin/vendors', authMiddleware, vendorRoutes);
-router.use('/admin/about', authMiddleware, aboutUsRoutes);
+// Every endpoint under /api/admin requires an authenticated user.
+router.use('/admin', authMiddleware);
+router.use('/admin/dashboard', dashboardRoutes);
+router.use('/admin/categories', categoryRoutes);
+router.use('/admin/products', productRoutes);
+router.use('/admin/news', newsRoutes);
+router.use('/admin/vendors', vendorRoutes);
+router.use('/admin/about', aboutUsRoutes);
 
 module.exports = router;

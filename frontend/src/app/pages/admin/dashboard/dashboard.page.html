@@ -1,23 +1,81 @@
+<ion-refresher slot="fixed" (ionRefresh)="loadStats($event)">
+  <ion-refresher-content pullingText="Tarik untuk memperbarui" refreshingSpinner="circles" refreshingText="Memuat statistik...">
+  </ion-refresher-content>
+</ion-refresher>
+
 <section class="page-heading">
-  <h1>Dashboard</h1>
-  <p>Ringkasan data CMS</p>
+  <div class="heading-text">
+    <h1>Dashboard</h1>
+    <p>Ringkasan data &amp; statistik CMS</p>
+  </div>
+  <button type="button" class="refresh-btn" (click)="loadStats()" [disabled]="loading || refreshing" title="Perbarui Data">
+    <i class="fas fa-sync-alt" [class.fa-spin]="loading || refreshing"></i>
+    {{ loading ? 'Memuat...' : refreshing ? 'Memperbarui...' : 'Perbarui' }}
+  </button>
 </section>
 
-<section class="stats-grid">
-  <article class="stat-card">
-    <span class="stat-label">Total Berita</span>
-    <strong>0</strong>
-  </article>
-  <article class="stat-card">
-    <span class="stat-label">Total Produk</span>
-    <strong>0</strong>
-  </article>
-  <article class="stat-card">
-    <span class="stat-label">Total Kategori</span>
-    <strong>0</strong>
-  </article>
-  <article class="stat-card">
-    <span class="stat-label">Total Vendor</span>
-    <strong>0</strong>
+<!-- Error Banner (hanya muncul saat initial load gagal) -->
+<div *ngIf="errorMessage" class="error-banner" role="alert">
+  <div class="error-content">
+    <i class="fas fa-exclamation-triangle error-icon"></i>
+    <span>{{ errorMessage }}</span>
+  </div>
+  <button type="button" class="retry-btn" (click)="loadStats()">Coba Lagi</button>
+</div>
+
+<!-- Skeleton: hanya tampil pada initial load (sebelum data pertama ada) -->
+<section *ngIf="loading" class="stats-grid">
+  <article class="stat-card skeleton" *ngFor="let i of [1,2,3,4]">
+    <div class="stat-skeleton-icon">
+      <ion-skeleton-text animated style="width: 52px; height: 52px; border-radius: 12px;"></ion-skeleton-text>
+    </div>
+    <div class="stat-skeleton-body">
+      <ion-skeleton-text animated style="width: 65%; height: 14px; margin-bottom: 10px;"></ion-skeleton-text>
+      <ion-skeleton-text animated style="width: 40%; height: 32px;"></ion-skeleton-text>
+    </div>
   </article>
 </section>
+
+<!-- Grid Statistik: tampil setelah data pertama berhasil dimuat -->
+<section *ngIf="!loading" class="stats-grid">
+  <article class="stat-card card-news">
+    <div class="stat-icon-wrapper">
+      <i class="fas fa-newspaper stat-icon"></i>
+    </div>
+    <div class="stat-info">
+      <span class="stat-label">Total Berita</span>
+      <strong class="stat-value">{{ stats.totalNews }}</strong>
+    </div>
+  </article>
+
+  <article class="stat-card card-products">
+    <div class="stat-icon-wrapper">
+      <i class="fas fa-briefcase stat-icon"></i>
+    </div>
+    <div class="stat-info">
+      <span class="stat-label">Total Jasa / Produk</span>
+      <strong class="stat-value">{{ stats.totalProducts }}</strong>
+    </div>
+  </article>
+
+  <article class="stat-card card-categories">
+    <div class="stat-icon-wrapper">
+      <i class="fas fa-tags stat-icon"></i>
+    </div>
+    <div class="stat-info">
+      <span class="stat-label">Total Kategori</span>
+      <strong class="stat-value">{{ stats.totalCategories }}</strong>
+    </div>
+  </article>
+
+  <article class="stat-card card-vendors">
+    <div class="stat-icon-wrapper">
+      <i class="fas fa-building stat-icon"></i>
+    </div>
+    <div class="stat-info">
+      <span class="stat-label">Total Vendor</span>
+      <strong class="stat-value">{{ stats.totalVendors }}</strong>
+    </div>
+  </article>
+</section>
+

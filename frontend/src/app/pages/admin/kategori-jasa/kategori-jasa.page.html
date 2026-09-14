@@ -1,14 +1,259 @@
+<ion-refresher slot="fixed" (ionRefresh)="loadCategories($event)">
+  <ion-refresher-content
+    pullingText="Tarik untuk memperbarui"
+    refreshingSpinner="circles"
+    refreshingText="Memuat kategori..."
+  >
+  </ion-refresher-content>
+</ion-refresher>
+
 <section class="page-heading">
-  <div>
+  <div class="heading-text">
     <h1>Kategori Jasa</h1>
-    <p>Kelola kategori jasa.</p>
+    <p>Kelola data kategori layanan dan produk perusahaan</p>
   </div>
-  <button type="button" class="primary-button">Tambah Kategori</button>
+  <div class="heading-actions">
+    <button
+      type="button"
+      class="refresh-btn"
+      (click)="loadCategories()"
+      [disabled]="loading || refreshing"
+      title="Perbarui Data"
+    >
+      <i class="fas fa-sync-alt" [class.fa-spin]="loading || refreshing"></i>
+      {{ loading ? 'Memuat...' : refreshing ? 'Memperbarui...' : 'Perbarui' }}
+    </button>
+    <button type="button" class="primary-button" (click)="openCreateModal()">
+      <i class="fas fa-plus"></i> Tambah Kategori
+    </button>
+  </div>
 </section>
 
-<section class="content-panel">
-  <table>
-    <thead><tr><th>Nama Kategori</th><th>Status</th><th>Aksi</th></tr></thead>
-    <tbody><tr><td colspan="3">Belum ada data.</td></tr></tbody>
-  </table>
+<!-- Error Banner -->
+<div *ngIf="errorMessage" class="error-banner" role="alert">
+  <div class="error-content">
+    <i class="fas fa-exclamation-triangle error-icon"></i>
+    <span>{{ errorMessage }}</span>
+  </div>
+  <button type="button" class="retry-btn" (click)="loadCategories()">Coba Lagi</button>
+</div>
+
+<!-- Controls Panel: Search & Page Size -->
+<section class="controls-panel">
+  <div class="search-box">
+    <i class="fas fa-search search-icon"></i>
+    <input
+      type="text"
+      class="search-input"
+      placeholder="Cari berdasarkan nama, slug, atau tipe..."
+      [(ngModel)]="searchQuery"
+      (ngModelChange)="onSearchChange()"
+    />
+    <button *ngIf="searchQuery" class="clear-search" (click)="searchQuery = ''; onSearchChange()">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <div class="page-size-selector">
+    <label for="pageSizeSelect">Tampilkan:</label>
+    <select
+      id="pageSizeSelect"
+      [(ngModel)]="pageSize"
+      (change)="onPageSizeChange()"
+      class="select-input"
+    >
+      <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }} per halaman</option>
+    </select>
+  </div>
 </section>
+
+<!-- Content Panel: Table -->
+<section class="content-panel">
+  <!-- Skeleton Loading State (hanya initial load) -->
+  <table *ngIf="loading" class="crud-table">
+    <thead>
+      <tr>
+        <th style="width: 60px">#</th>
+        <th>Nama Kategori</th>
+        <th>Slug</th>
+        <th style="width: 110px">Tipe</th>
+        <th style="width: 140px; text-align: center">Aksi</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let i of [1, 2, 3, 4, 5]">
+        <td><ion-skeleton-text animated style="width: 20px; height: 16px"></ion-skeleton-text></td>
+        <td><ion-skeleton-text animated style="width: 70%; height: 16px"></ion-skeleton-text></td>
+        <td><ion-skeleton-text animated style="width: 60%; height: 16px"></ion-skeleton-text></td>
+        <td><ion-skeleton-text animated style="width: 50px; height: 20px; border-radius: 4px"></ion-skeleton-text></td>
+        <td style="text-align: center">
+          <ion-skeleton-text animated style="width: 60px; height: 28px; margin: 0 auto; border-radius: 4px"></ion-skeleton-text>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Data Table -->
+  <div *ngIf="!loading" class="table-responsive">
+    <table class="crud-table">
+      <thead>
+        <tr>
+          <th style="width: 60px">#</th>
+          <th>Nama Kategori</th>
+          <th>Slug</th>
+          <th style="width: 110px">Tipe</th>
+          <th style="width: 140px; text-align: center">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let cat of paginatedCategories; let i = index">
+          <td class="text-muted">{{ (currentPage - 1) * pageSize + i + 1 }}</td>
+          <td class="font-medium">{{ cat.name }}</td>
+          <td><code class="slug-badge">{{ cat.slug }}</code></td>
+          <td>
+            <span
+              class="badge-type"
+              [class.badge-product]="cat.type === 'PRODUCT'"
+              [class.badge-news]="cat.type === 'NEWS'"
+            >
+              {{ cat.type }}
+            </span>
+          </td>
+          <td style="text-align: center">
+            <div class="action-buttons">
+              <button
+                type="button"
+                class="btn-icon btn-edit"
+                (click)="openEditModal(cat)"
+                title="Edit Kategori"
+              >
+                <i class="fas fa-edit"></i>
+              </button>
+              <button
+                type="button"
+                class="btn-icon btn-delete"
+                (click)="confirmDelete(cat)"
+                title="Hapus Kategori"
+              >
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Empty State -->
+        <tr *ngIf="paginatedCategories.length === 0">
+          <td colspan="5" class="empty-state">
+            <i class="fas fa-folder-open empty-icon"></i>
+            <p>
+              {{ searchQuery ? 'Tidak ada kategori yang cocok dengan pencarian.' : 'Belum ada data kategori jasa.' }}
+            </p>
+            <button
+              *ngIf="!searchQuery"
+              type="button"
+              class="btn-link"
+              (click)="openCreateModal()"
+            >
+              + Tambah Kategori Pertama
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination Controls -->
+  <div *ngIf="!loading && filteredCategories.length > 0" class="pagination-footer">
+    <span class="pagination-info">
+      Menampilkan {{ (currentPage - 1) * pageSize + 1 }} -
+      {{ Math.min(currentPage * pageSize, filteredCategories.length) }} dari
+      {{ filteredCategories.length }} data
+    </span>
+
+    <div class="pagination-buttons">
+      <button
+        type="button"
+        class="page-btn"
+        [disabled]="currentPage === 1"
+        (click)="goToPage(currentPage - 1)"
+      >
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      <span class="page-current">{{ currentPage }} / {{ totalPages }}</span>
+      <button
+        type="button"
+        class="page-btn"
+        [disabled]="currentPage === totalPages"
+        (click)="goToPage(currentPage + 1)"
+      >
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- Form Modal (Create / Edit) -->
+<ion-modal [isOpen]="isModalOpen" (didDismiss)="closeModal()" class="custom-crud-modal">
+  <ng-template>
+    <div class="modal-header">
+      <h2>{{ isEditing ? 'Edit Kategori Jasa' : 'Tambah Kategori Jasa' }}</h2>
+      <button type="button" class="btn-close" (click)="closeModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="categoryForm" (ngSubmit)="saveCategory()" class="modal-body">
+      <div class="form-group">
+        <label for="catName">Nama Kategori <span class="required">*</span></label>
+        <input
+          id="catName"
+          type="text"
+          class="form-control"
+          formControlName="name"
+          placeholder="Contoh: Makeup Artist, Hairdo, Press-on Nails"
+          [class.is-invalid]="categoryForm.get('name')?.touched && categoryForm.get('name')?.invalid"
+        />
+        <div
+          *ngIf="categoryForm.get('name')?.touched && categoryForm.get('name')?.invalid"
+          class="invalid-feedback"
+        >
+          <span *ngIf="categoryForm.get('name')?.errors?.['required']">Nama kategori wajib diisi.</span>
+          <span *ngIf="categoryForm.get('name')?.errors?.['minlength']">Nama kategori minimal 2 karakter.</span>
+          <span *ngIf="categoryForm.get('name')?.errors?.['maxlength']">Nama kategori maksimal 100 karakter.</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="catSlug">Slug (URL)</label>
+        <input
+          id="catSlug"
+          type="text"
+          class="form-control"
+          formControlName="slug"
+          placeholder="Contoh: makeup-artist (opsional)"
+        />
+        <small class="form-hint">
+          Opsional. Jika dikosongkan, slug akan terisi otomatis dari nama kategori.
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="catType">Tipe Kategori <span class="required">*</span></label>
+        <select id="catType" class="form-control" formControlName="type">
+          <option value="PRODUCT">PRODUCT (Kategori Jasa / Layanan / Produk)</option>
+          <option value="NEWS">NEWS (Kategori Berita / Artikel)</option>
+        </select>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeModal()" [disabled]="submitting">
+          Batal
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="submitting">
+          <i *ngIf="submitting" class="fas fa-spinner fa-spin mr-1"></i>
+          {{ submitting ? 'Menyimpan...' : isEditing ? 'Simpan Perubahan' : 'Tambah Kategori' }}
+        </button>
+      </div>
+    </form>
+  </ng-template>
+</ion-modal>
