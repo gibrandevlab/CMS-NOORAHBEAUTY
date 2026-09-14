@@ -8,6 +8,7 @@ const newsRoutes = require('./newsRoutes');
 const vendorRoutes = require('./vendorRoutes');
 const aboutUsRoutes = require('./aboutUsRoutes');
 const dashboardRoutes = require('./dashboardRoutes');
+const userRoutes = require('./userRoutes');
 
 const uploadRoutes = require('./uploadRoutes');
 
@@ -39,6 +40,8 @@ router.use('/admin/products', productRoutes);
 router.use('/admin/news', newsRoutes);
 router.use('/admin/vendors', vendorRoutes);
 router.use('/admin/about', aboutUsRoutes);
+router.use('/admin/users', userRoutes);
 router.use('/admin/upload', uploadRoutes);
 
 module.exports = router;
+

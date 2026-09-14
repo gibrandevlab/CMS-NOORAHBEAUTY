@@ -1,13 +1,244 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>beranda</ion-title>
-  </ion-toolbar>
-</ion-header>
+<div class="beranda-page">
+  <!-- Hero Banner Section -->
+  <section class="hero-section text-light py-5">
+    <div class="container py-4">
+      <div class="row align-items-center g-4">
+        <div class="col-lg-7">
+          <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-dark-glass border-rose mb-3">
+            <ion-icon name="sparkles-outline" class="text-rose"></ion-icon>
+            <span class="small font-monospace text-uppercase text-rose">Professional MUA & Hairdo Semarang</span>
+          </div>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">beranda</ion-title>
-    </ion-toolbar>
-  </ion-header>
-</ion-content>
+          <h1 class="display-4 hero-headline">
+            {{ aboutInfo?.company_name || 'Noorah Beauty MUA' }}
+          </h1>
+
+          <p class="lead section-lead mb-4">
+            {{ aboutInfo?.description || 'Your beauty partner — Penyedia layanan Makeup Artist (MUA), Hairdo profesional, Photoshoot Styling, dan Custom Press-on Nails berkualitas tinggi di Semarang.' }}
+          </p>
+
+          <div class="d-flex flex-wrap align-items-center gap-3">
+            <a [href]="getWhatsAppUrl()" target="_blank" rel="noopener" class="btn btn-rose-gold btn-lg rounded-pill px-4 py-3 d-flex align-items-center gap-2">
+              <ion-icon name="logo-whatsapp" class="fs-4"></ion-icon>
+              <span>Book Appointment via WhatsApp</span>
+            </a>
+            <a routerLink="/katalog-jasa" class="btn btn-outline-light btn-lg rounded-pill px-4 py-3">
+              Lihat Katalog Jasa
+            </a>
+          </div>
+        </div>
+
+        <div class="col-lg-5 text-center">
+          <div class="hero-avatar-card p-3 rounded-4 shadow-lg border-rose bg-surface position-relative d-inline-block">
+            <div class="hero-avatar-box rounded-3 overflow-hidden">
+              <img src="assets/images/Foto orang.png" alt="Noorah Beauty MUA Showcase" class="img-fluid hero-avatar-img" (error)="$any($event.target).src='https://placehold.net/500x500.png'" />
+            </div>
+            <div class="hero-floating-badge">
+              <ion-icon name="star-outline" class="me-1"></ion-icon> Top MUA Semarang
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Highlights Category Showcase -->
+  <section class="highlights-section py-4 border-y-dark bg-surface">
+    <div class="container">
+      <div class="row g-3 justify-content-center">
+        <div *ngFor="let item of categoryHighlights" class="col-6 col-md-4 col-lg-2">
+          <div class="highlight-card p-3 text-center rounded-3 d-block" style="cursor: default;">
+            <div class="highlight-icon-box mx-auto mb-2 text-rose">
+              <ion-icon [name]="item.icon" class="fs-2"></ion-icon>
+            </div>
+            <span class="highlight-title d-block fw-semibold small">{{ item.name }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Instagram-Style Portfolio Grid Section -->
+  <section class="portfolio-section py-5">
+    <div class="container">
+      <div class="text-center mb-5">
+        <span class="eyebrow-label justify-content-center d-flex">PORTFOLIO SHOWCASE</span>
+        <h2 class="section-title display-6 mb-2">Galeri Project & Hasil Makeup</h2>
+        <p class="section-lead mx-auto">
+          Koleksi dokumentasi hasil periasan makeup, hairdo, dan photoshoot klien Noorah Beauty MUA.
+        </p>
+      </div>
+
+      <div class="row g-3">
+          <div *ngFor="let news of portfolioNews" class="col-md-4 col-6">
+            <div class="portfolio-grid-card position-relative rounded-3 overflow-hidden">
+              <img [src]="getImageUrl(news.image)" [alt]="news.title" class="portfolio-grid-img" (error)="$any($event.target).src='https://placehold.net/400x400.png'" />
+              <div class="portfolio-overlay p-3 d-flex flex-column justify-content-end">
+                <span class="badge bg-rose-gold text-dark align-self-start mb-2 small">{{ news.category?.name || 'Showcase' }}</span>
+                <h5 class="fw-bold mb-1 fs-6" style="color: var(--text-primary);">{{ news.title }}</h5>
+                <small class="text-secondary">{{ getExcerpt(news.content, 60) }}</small>
+                <a [routerLink]="['/berita', news.slug]" class="btn btn-sm btn-outline-light rounded-pill mt-2 w-auto me-auto">
+                  Lihat Detail
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="portfolioNews.length === 0" class="col-12 text-center py-5 text-secondary">
+            <ion-icon name="images-outline" class="fs-1 text-muted mb-2"></ion-icon>
+            <p>Belum ada data portofolio yang ditampilkan.</p>
+          </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Product & Service Catalog Section -->
+  <section class="catalog-section py-5 bg-surface">
+    <div class="container">
+      <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+        <div>
+          <span class="eyebrow-label">KATALOG PILIHAN</span>
+          <h2 class="section-title display-6">Layanan & Custom Nails</h2>
+        </div>
+        <a routerLink="/katalog-jasa" class="btn btn-outline-rose rounded-pill px-4">
+          Lihat Semua Katalog
+        </a>
+      </div>
+
+      <div class="row g-4">
+        <div *ngFor="let product of products | slice:0:6" class="col-lg-4 col-md-6">
+          <div class="product-card card border-0 rounded-4 overflow-hidden shadow-sm h-100 bg-surface-card">
+            <div class="product-img-box position-relative">
+              <img [src]="getImageUrl(product.image)" [alt]="product.name" class="product-img" (error)="$any($event.target).src='https://placehold.net/400x300.png'" />
+              <span class="product-badge badge font-monospace">
+                {{ product.category?.name || 'Layanan' }}
+              </span>
+            </div>
+
+            <div class="card-body p-4 d-flex flex-column">
+              <h4 class="fw-bold mb-2 fs-5" style="color: var(--text-primary);">{{ product.name }}</h4>
+              <p class="section-lead small mb-3 flex-grow-1" style="max-width: none;">
+                {{ product.description || 'Layanan kecantikan profesional dengan kualitas terbaik.' }}
+              </p>
+
+              <div class="d-flex align-items-center justify-content-between pt-3 border-top border-secondary opacity-75">
+                <div>
+                  <small class="product-price-label">Mulai Dari</small>
+                  <span class="product-price fs-5">{{ formatPrice(product.price) }}</span>
+                </div>
+                <a [href]="getWhatsAppUrl(product.name)" target="_blank" rel="noopener" class="btn btn-rose-gold btn-sm rounded-pill px-3 py-2 d-flex align-items-center gap-1">
+                  <ion-icon name="logo-whatsapp"></ion-icon>
+                  <span>Pesan</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="products.length === 0" class="col-12 text-center py-5 text-secondary">
+          <ion-icon name="cube-outline" class="fs-1 text-muted mb-2"></ion-icon>
+          <p>Belum ada data produk / layanan yang ditampilkan.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Beauty Tips & Blog Section -->
+  <section class="blog-section py-5">
+    <div class="container">
+      <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+        <div>
+          <span class="eyebrow-label">ARTIKEL & TIPS</span>
+          <h2 class="section-title display-6">Beauty Guide & Informasi</h2>
+        </div>
+        <a routerLink="/berita" class="btn btn-outline-rose rounded-pill px-4">
+          Lihat Semua Artikel
+        </a>
+      </div>
+
+      <div class="row g-4">
+          <div *ngFor="let article of articleNews" class="col-lg-4 col-md-6">
+            <div class="article-card card border-0 rounded-4 overflow-hidden bg-surface-card h-100">
+              <div class="article-img-box">
+                <img [src]="getImageUrl(article.image)" [alt]="article.title" class="article-img" (error)="$any($event.target).src='https://placehold.net/400x250.png'" />
+              </div>
+
+            <div class="card-body p-4 d-flex flex-column">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <span class="badge article-category small">{{ article.category?.name || 'Tips' }}</span>
+                  <small class="article-meta ms-auto">
+                    {{ (article.createdAt || article.created_at) ? ((article.createdAt || article.created_at) | date:'dd MMM yyyy') : 'Baru' }}
+                </small>
+              </div>
+
+              <h5 class="fw-bold mb-2 fs-5 line-clamp-2" style="color: var(--text-primary);">{{ article.title }}</h5>
+              <p class="section-lead small mb-3 flex-grow-1" style="max-width: none;">
+                {{ getExcerpt(article.content, 100) }}
+              </p>
+
+              <a [routerLink]="['/berita', article.slug]" class="text-rose fw-semibold text-decoration-none small d-inline-flex align-items-center gap-1">
+                <span>Baca Selengkapnya</span>
+                <ion-icon name="arrow-forward-outline"></ion-icon>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Studio & About Us Profile Section -->
+  <section class="about-section py-5 bg-surface">
+    <div class="container py-3">
+      <div class="row align-items-center g-4">
+        <div class="col-lg-6">
+          <span class="eyebrow-label">TENTANG KAMI</span>
+          <h2 class="section-title display-6 mb-3">
+            {{ aboutInfo?.company_name || 'Noorah Beauty MUA' }}
+          </h2>
+          <p class="section-lead mb-4" style="max-width: none;">
+            {{ aboutInfo?.description || 'Kami berdedikasi untuk memberikan riasan kecantikan dan hairdo yang elegan, mempertegas kecantikan alami Anda di setiap momen spesial.' }}
+          </p>
+
+          <div class="row g-3 mb-4" *ngIf="aboutInfo">
+            <div class="col-md-6" *ngIf="aboutInfo.vision">
+              <div class="p-3 rounded-3 bg-surface-card border-rose">
+                <h6 class="fw-bold text-rose mb-2"><ion-icon name="eye-outline" class="me-1"></ion-icon> Visi Kami</h6>
+                <p class="section-lead small mb-0" style="max-width: none;">{{ aboutInfo.vision }}</p>
+              </div>
+            </div>
+            <div class="col-md-6" *ngIf="aboutInfo.mission">
+              <div class="p-3 rounded-3 bg-surface-card border-rose">
+                <h6 class="fw-bold text-rose mb-2"><ion-icon name="flag-outline" class="me-1"></ion-icon> Misi Kami</h6>
+                <p class="section-lead small mb-0" style="max-width: none;">{{ aboutInfo.mission }}</p>
+              </div>
+            </div>
+          </div>
+
+          <a [href]="getWhatsAppUrl('Konsultasi MUA & Studio')" target="_blank" rel="noopener" class="btn btn-rose-gold rounded-pill px-4 py-3 d-inline-flex align-items-center gap-2">
+            <ion-icon name="logo-whatsapp" class="fs-5"></ion-icon>
+            <span>Hubungi Studio via WhatsApp</span>
+          </a>
+        </div>
+
+        <div class="col-lg-6">
+          <!-- Vendor Partner Grid -->
+          <div class="p-4 rounded-4 bg-surface-card border-secondary">
+            <h5 class="fw-bold text-gold mb-3 text-center">Mitra & Rekanan Vendor</h5>
+            <div class="row g-3 justify-content-center align-items-center">
+              <div *ngFor="let vendor of vendors" class="col-4 text-center">
+                <div class="vendor-logo-box p-2 rounded">
+                  <img [src]="getImageUrl(vendor.logo)" [alt]="vendor.name" class="img-fluid vendor-logo-img" (error)="$any($event.target).src='https://placehold.net/120x60.png'" />
+                </div>
+                <small class="vendor-name d-block mt-1 font-monospace text-truncate" style="font-size: 0.7rem;">{{ vendor.name }}</small>
+              </div>
+              <div *ngIf="vendors.length === 0" class="col-12 text-center vendor-empty-state small py-3">
+                Mitra vendor partner terpercaya di Semarang.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

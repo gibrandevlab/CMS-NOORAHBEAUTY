@@ -1,13 +1,204 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>katalog-jasa</ion-title>
-  </ion-toolbar>
-</ion-header>
+<div class="katalog-page py-5">
+  <div class="container">
+    <!-- Header Title & Tagline -->
+    <div class="text-center mb-5">
+      <span class="eyebrow-label mb-2">SERVICES & NAILS CATALOG</span>
+      <h1 class="section-title display-5 mb-3">Katalog Jasa & Press-on Nails</h1>
+      <p class="section-lead mx-auto" style="max-width: 650px;">
+        Temukan pilihan paket periasan Makeup Artist (MUA), Hairdo Styling, dan koleksi Custom Press-on Nails eksklusif Noorah Beauty MUA.
+      </p>
+    </div>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">katalog-jasa</ion-title>
-    </ion-toolbar>
-  </ion-header>
-</ion-content>
+    <!-- Search & Category Filter Pills Bar -->
+    <div class="card border-0 bg-surface-card p-3 mb-5 rounded-4 shadow-sm">
+      <div class="row g-3 align-items-center">
+        <!-- Searchbar -->
+        <div class="col-md-6">
+          <div class="input-group search-input-group">
+            <span class="input-group-text">
+              <ion-icon name="search-outline"></ion-icon>
+            </span>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Cari nama layanan, paket makeup, atau nails..."
+              [(ngModel)]="searchQuery"
+              (ngModelChange)="onSearchChange()"
+            />
+          </div>
+        </div>
+
+        <!-- Filter Category Pills -->
+        <div class="col-md-6">
+          <div class="d-flex flex-wrap gap-2 justify-content-md-end">
+            <button
+              type="button"
+              class="btn btn-sm rounded-pill px-3"
+              [class.btn-rose-gold]="selectedCategory === 'ALL'"
+              [class.btn-outline-secondary]="selectedCategory !== 'ALL'"
+              (click)="filterByCategory('ALL')"
+            >
+              Semua Kategori
+            </button>
+            <button
+              *ngFor="let cat of categories"
+              type="button"
+              class="btn btn-sm rounded-pill px-3"
+              [class.btn-rose-gold]="selectedCategory === cat.id"
+              [class.btn-outline-secondary]="selectedCategory !== cat.id"
+              (click)="filterByCategory(cat.id)"
+            >
+              {{ cat.name }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Skeleton -->
+    <div *ngIf="loading" class="row g-4">
+      <div *ngFor="let dummy of [1,2,3,4,5,6]" class="col-lg-4 col-md-6">
+        <div class="card border-0 bg-surface-card p-4 rounded-4">
+          <ion-skeleton-text animated style="width: 100%; height: 200px; border-radius: 12px;" class="mb-3"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width: 60%; height: 24px;" class="mb-2"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width: 100%; height: 16px;" class="mb-2"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width: 40%; height: 28px;"></ion-skeleton-text>
+        </div>
+      </div>
+    </div>
+
+    <!-- Product Grid -->
+    <div *ngIf="!loading" class="row g-4">
+      <div *ngFor="let product of pagedProducts" class="col-lg-4 col-md-6">
+        <div class="catalog-card card border-0 rounded-4 overflow-hidden bg-surface-card h-100 shadow-sm">
+          <div class="catalog-img-box position-relative" (click)="openProductDetail(product)">
+            <img [src]="getImageUrl(product.image)" [alt]="product.name" class="catalog-img" (error)="$any($event.target).src='https://placehold.net/400x300.png'" />
+            <span class="catalog-badge badge font-monospace">
+              {{ product.category?.name || 'Layanan' }}
+            </span>
+          </div>
+
+          <div class="card-body p-4 d-flex flex-column">
+            <h3 class="fw-bold text-light mb-2 fs-5 text-truncate" (click)="openProductDetail(product)">
+              {{ product.name }}
+            </h3>
+            <p class="section-lead small mb-3 flex-grow-1 line-clamp-3">
+              {{ product.description || 'Layanan kecantikan profesional dengan kualitas terbaik.' }}
+            </p>
+
+            <div class="d-flex align-items-center justify-content-between pt-3 border-top border-secondary opacity-75 mt-auto">
+              <div>
+                <small class="text-muted d-block small">Mulai Dari</small>
+                <span class="fw-bold text-gold fs-5">{{ formatPrice(product.price) }}</span>
+              </div>
+
+              <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-outline-light btn-sm rounded-pill px-3" (click)="openProductDetail(product)">
+                  Detail
+                </button>
+                <a [href]="getWhatsAppUrl(product.name)" target="_blank" rel="noopener" class="btn btn-rose-gold btn-sm rounded-pill px-3 d-flex align-items-center gap-1">
+                  <ion-icon name="logo-whatsapp"></ion-icon>
+                  <span>Pesan</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="filteredProducts.length === 0" class="col-12 text-center py-5 text-secondary">
+        <ion-icon name="cube-outline" class="fs-1 text-muted mb-3 d-block mx-auto"></ion-icon>
+        <h5>Tidak ada produk atau layanan yang ditemukan.</h5>
+        <p class="small text-muted">Coba ubah kata kunci pencarian atau pilih kategori lain.</p>
+      </div>
+    </div>
+
+    <!-- Fitur Navigasi Halaman (Pagination Bar) -->
+    <div *ngIf="!loading && totalPages > 1" class="d-flex flex-wrap justify-content-center align-items-center gap-2 mt-5 pagination-wrapper">
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary rounded-pill px-3"
+        [disabled]="currentPage === 1"
+        (click)="setPage(currentPage - 1)"
+      >
+        <ion-icon name="chevron-back-outline" class="me-1"></ion-icon>
+        Sebelumnya
+      </button>
+
+      <div class="d-flex gap-1">
+        <button
+          *ngFor="let page of pageNumbers"
+          type="button"
+          class="btn btn-sm rounded-circle fw-bold page-num-btn"
+          [class.btn-rose-gold]="currentPage === page"
+          [class.btn-outline-secondary]="currentPage !== page"
+          (click)="setPage(page)"
+        >
+          {{ page }}
+        </button>
+      </div>
+
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary rounded-pill px-3"
+        [disabled]="currentPage === totalPages"
+        (click)="setPage(currentPage + 1)"
+      >
+        Selanjutnya
+        <ion-icon name="chevron-forward-outline" class="ms-1"></ion-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Detail Product Modal -->
+  <ion-modal [isOpen]="isDetailOpen" (didDismiss)="closeDetailModal()" class="product-detail-modal">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar color="dark">
+          <ion-title>{{ selectedProduct?.name || 'Detail Layanan' }}</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeDetailModal()">Tutup</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding bg-dark text-light">
+        <div class="container py-3" *ngIf="selectedProduct">
+          <div class="row g-4 align-items-center">
+            <div class="col-md-6">
+              <div class="rounded-4 overflow-hidden border-rose">
+                <img [src]="getImageUrl(selectedProduct.image)" [alt]="selectedProduct.name" class="img-fluid w-100" (error)="$any($event.target).src='https://placehold.net/500x400.png'" />
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <span class="badge bg-rose-gold text-dark px-3 py-2 fs-6 mb-3">
+                {{ selectedProduct.category?.name || 'Kategori Layanan' }}
+              </span>
+
+              <h2 class="fw-bold text-gold display-6 mb-3">{{ selectedProduct.name }}</h2>
+
+              <div class="mb-4">
+                <small class="text-muted d-block">Harga Layanan / Paket</small>
+                <span class="display-6 fw-bold text-rose">{{ formatPrice(selectedProduct.price) }}</span>
+              </div>
+
+              <div class="p-3 rounded-3 bg-surface mb-4">
+                <h6 class="fw-semibold text-gold mb-2">Deskripsi Layanan & Spesifikasi:</h6>
+                <p class="section-lead lead-normal mb-0 whitespace-pre-line">
+                  {{ selectedProduct.description || 'Layanan kecantikan profesional Noorah Beauty MUA.' }}
+                </p>
+              </div>
+
+              <a [href]="getWhatsAppUrl(selectedProduct.name)" target="_blank" rel="noopener" class="btn btn-rose-gold btn-lg rounded-pill w-100 py-3 d-flex align-items-center justify-content-center gap-2">
+                <ion-icon name="logo-whatsapp" class="fs-4"></ion-icon>
+                <span>Pesan Layanan Ini via WhatsApp</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+</div>

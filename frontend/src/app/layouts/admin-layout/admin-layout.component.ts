@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
@@ -7,6 +7,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
   selector: 'app-admin-layout',
   standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './admin-layout.component.html',
   styleUrl: './admin-layout.component.scss',
 })

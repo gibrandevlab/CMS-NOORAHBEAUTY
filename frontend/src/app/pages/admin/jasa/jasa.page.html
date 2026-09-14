@@ -1,10 +1,370 @@
+<ion-refresher slot="fixed" (ionRefresh)="loadProducts($event)">
+  <ion-refresher-content
+    pullingText="Tarik untuk memperbarui"
+    refreshingSpinner="circles"
+    refreshingText="Memuat data jasa..."
+  >
+  </ion-refresher-content>
+</ion-refresher>
+
 <section class="page-heading">
-  <div><h1>Jasa</h1><p>Kelola daftar jasa atau produk.</p></div>
-  <button type="button" class="primary-button">Tambah Jasa</button>
+  <div class="heading-text">
+    <h1>Katalog Jasa & Layanan</h1>
+    <p>Kelola daftar produk, jasa, tarif, dan ketersediaan layanan perusahaan</p>
+  </div>
+  <div class="heading-actions">
+    <button
+      type="button"
+      class="refresh-btn"
+      (click)="loadProducts()"
+      [disabled]="loading || refreshing"
+      title="Perbarui Data"
+    >
+      <ion-icon name="refresh-outline" [class.icon-spin]="loading || refreshing" aria-hidden="true"></ion-icon>
+      {{ loading ? 'Memuat...' : refreshing ? 'Memperbarui...' : 'Perbarui' }}
+    </button>
+    <button type="button" class="primary-button" (click)="openCreateModal()">
+      <ion-icon name="add-outline" aria-hidden="true"></ion-icon> Tambah Jasa
+    </button>
+  </div>
 </section>
+
+<!-- Error Banner -->
+<div *ngIf="errorMessage" class="error-banner" role="alert">
+  <div class="error-content">
+    <ion-icon name="alert-circle-outline" class="error-icon" aria-hidden="true"></ion-icon>
+    <span>{{ errorMessage }}</span>
+  </div>
+  <button type="button" class="retry-btn" (click)="loadProducts()">Coba Lagi</button>
+</div>
+
+<!-- Controls Panel: Search, Category Filter, Page Size -->
+<section class="controls-panel">
+  <div class="search-box">
+    <ion-icon name="search-outline" class="search-icon" aria-hidden="true"></ion-icon>
+    <input
+      type="text"
+      class="search-input"
+      placeholder="Cari berdasarkan nama, deskripsi, atau kategori..."
+      [(ngModel)]="searchQuery"
+      (ngModelChange)="onFilterChange()"
+    />
+    <button *ngIf="searchQuery" class="clear-search" (click)="searchQuery = ''; onFilterChange()">
+      <ion-icon name="close-outline" aria-hidden="true"></ion-icon>
+    </button>
+  </div>
+
+  <div class="filter-box">
+    <label for="categoryFilter">Kategori:</label>
+    <select
+      id="categoryFilter"
+      [(ngModel)]="selectedCategoryId"
+      (change)="onFilterChange()"
+      class="select-input"
+    >
+      <option value="ALL">Semua Kategori</option>
+      <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
+    </select>
+  </div>
+
+  <div class="page-size-selector">
+    <label for="pageSizeSelect">Tampilkan:</label>
+    <select
+      id="pageSizeSelect"
+      [(ngModel)]="pageSize"
+      (change)="onPageSizeChange()"
+      class="select-input"
+    >
+      <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }} per halaman</option>
+    </select>
+  </div>
+</section>
+
+<!-- Content Panel: Table -->
 <section class="content-panel">
-  <table>
-    <thead><tr><th>Nama Jasa</th><th>Kategori</th><th>Status</th><th>Aksi</th></tr></thead>
-    <tbody><tr><td colspan="4">Belum ada data.</td></tr></tbody>
+  <!-- Skeleton Loading State -->
+  <table *ngIf="loading" class="crud-table">
+    <thead>
+      <tr>
+        <th style="width: 60px">#</th>
+        <th style="width: 70px">Gambar</th>
+        <th>Nama Jasa</th>
+        <th>Kategori</th>
+        <th style="width: 140px">Harga</th>
+        <th style="width: 100px; text-align: center">Status</th>
+        <th style="width: 120px; text-align: center">Aksi</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let i of [1, 2, 3, 4, 5]">
+        <td><ion-skeleton-text animated style="width: 20px; height: 16px"></ion-skeleton-text></td>
+        <td><ion-skeleton-text animated style="width: 48px; height: 48px; border-radius: 6px"></ion-skeleton-text></td>
+        <td><ion-skeleton-text animated style="width: 70%; height: 16px"></ion-skeleton-text></td>
+        <td><ion-skeleton-text animated style="width: 50%; height: 16px"></ion-skeleton-text></td>
+        <td><ion-skeleton-text animated style="width: 80px; height: 16px"></ion-skeleton-text></td>
+        <td style="text-align: center">
+          <ion-skeleton-text animated style="width: 60px; height: 22px; margin: 0 auto; border-radius: 12px"></ion-skeleton-text>
+        </td>
+        <td style="text-align: center">
+          <ion-skeleton-text animated style="width: 60px; height: 28px; margin: 0 auto; border-radius: 4px"></ion-skeleton-text>
+        </td>
+      </tr>
+    </tbody>
   </table>
+
+  <!-- Data Table -->
+  <div *ngIf="!loading" class="table-responsive">
+    <table class="crud-table">
+      <thead>
+        <tr>
+          <th style="width: 60px">#</th>
+          <th style="width: 70px">Gambar</th>
+          <th>Nama Jasa</th>
+          <th>Kategori</th>
+          <th style="width: 140px">Harga</th>
+          <th style="width: 100px; text-align: center">Status</th>
+          <th style="width: 120px; text-align: center">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of paginatedProducts; let i = index">
+          <td class="text-muted">{{ (currentPage - 1) * pageSize + i + 1 }}</td>
+          <td>
+            <div class="thumb-box">
+              <img [src]="getImageUrl(item.image)" [alt]="item.name" class="thumb-img" />
+            </div>
+          </td>
+          <td class="font-medium">
+            <div class="item-title">{{ item.name }}</div>
+            <code class="slug-badge">{{ item.slug }}</code>
+          </td>
+          <td>
+            <span class="category-chip" *ngIf="item.category">
+              <ion-icon name="folder-outline" aria-hidden="true"></ion-icon>
+              {{ item.category.name }}
+            </span>
+            <span class="text-muted" *ngIf="!item.category">-</span>
+          </td>
+          <td class="price-cell">{{ formatRupiah(item.price) }}</td>
+          <td style="text-align: center">
+            <button
+              type="button"
+              class="status-toggle-btn"
+              [class.status-active]="item.is_active"
+              [class.status-inactive]="!item.is_active"
+              (click)="toggleActive(item, $event)"
+              [title]="item.is_active ? 'Klik untuk menonaktifkan' : 'Klik untuk mengaktifkan'"
+            >
+              <span class="dot"></span>
+              {{ item.is_active ? 'Aktif' : 'Non-Aktif' }}
+            </button>
+          </td>
+          <td style="text-align: center">
+            <div class="action-buttons">
+              <button
+                type="button"
+                class="btn-icon btn-edit"
+                (click)="openEditModal(item)"
+                title="Edit Jasa"
+              >
+                <ion-icon name="create-outline" aria-hidden="true"></ion-icon>
+              </button>
+              <button
+                type="button"
+                class="btn-icon btn-delete"
+                (click)="confirmDelete(item)"
+                title="Hapus Jasa"
+              >
+                <ion-icon name="trash-outline" aria-hidden="true"></ion-icon>
+              </button>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Empty State -->
+        <tr *ngIf="paginatedProducts.length === 0">
+          <td colspan="7" class="empty-state">
+            <ion-icon name="cube-outline" class="empty-icon" aria-hidden="true"></ion-icon>
+            <p>
+              {{ searchQuery || selectedCategoryId !== 'ALL' ? 'Tidak ada jasa yang cocok dengan kriteria pencarian.' : 'Belum ada data jasa / layanan.' }}
+            </p>
+            <button
+              *ngIf="!searchQuery && selectedCategoryId === 'ALL'"
+              type="button"
+              class="btn-link"
+              (click)="openCreateModal()"
+            >
+              + Tambah Jasa Pertama
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination Controls -->
+  <div *ngIf="!loading && filteredProducts.length > 0" class="pagination-footer">
+    <span class="pagination-info">
+      Menampilkan {{ (currentPage - 1) * pageSize + 1 }} -
+      {{ Math.min(currentPage * pageSize, filteredProducts.length) }} dari
+      {{ filteredProducts.length }} data
+    </span>
+
+    <div class="pagination-buttons">
+      <button
+        type="button"
+        class="page-btn"
+        [disabled]="currentPage === 1"
+        (click)="goToPage(currentPage - 1)"
+      >
+        <ion-icon name="chevron-back-outline" aria-hidden="true"></ion-icon>
+      </button>
+      <span class="page-current">{{ currentPage }} / {{ totalPages }}</span>
+      <button
+        type="button"
+        class="page-btn"
+        [disabled]="currentPage === totalPages"
+        (click)="goToPage(currentPage + 1)"
+      >
+        <ion-icon name="chevron-forward-outline" aria-hidden="true"></ion-icon>
+      </button>
+    </div>
+  </div>
 </section>
+
+<!-- Form Modal (Create / Edit) -->
+<ion-modal [isOpen]="isModalOpen" (didDismiss)="closeModal()" class="custom-crud-modal">
+  <ng-template>
+    <div class="modal-header">
+      <h2>{{ isEditing ? 'Edit Layanan Jasa' : 'Tambah Layanan Jasa' }}</h2>
+      <button type="button" class="btn-close" (click)="closeModal()">
+        <ion-icon name="close-outline" aria-hidden="true"></ion-icon>
+      </button>
+    </div>
+
+    <form [formGroup]="productForm" (ngSubmit)="saveProduct()" class="modal-body">
+      <div class="form-row">
+        <div class="form-group col-half">
+          <label for="prodCategory">Kategori Layanan <span class="required">*</span></label>
+          <select
+            id="prodCategory"
+            class="form-control"
+            formControlName="category_id"
+            [class.is-invalid]="productForm.get('category_id')?.touched && productForm.get('category_id')?.invalid"
+          >
+            <option value="" disabled>-- Pilih Kategori --</option>
+            <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
+          </select>
+          <div
+            *ngIf="productForm.get('category_id')?.touched && productForm.get('category_id')?.invalid"
+            class="invalid-feedback"
+          >
+            Kategori wajib dipilih.
+          </div>
+        </div>
+
+        <div class="form-group col-half">
+          <label for="prodName">Nama Jasa / Layanan <span class="required">*</span></label>
+          <input
+            id="prodName"
+            type="text"
+            class="form-control"
+            formControlName="name"
+            placeholder="Contoh: Jasa Rias Pengantin Modern"
+            [class.is-invalid]="productForm.get('name')?.touched && productForm.get('name')?.invalid"
+          />
+          <div
+            *ngIf="productForm.get('name')?.touched && productForm.get('name')?.invalid"
+            class="invalid-feedback"
+          >
+            <span *ngIf="productForm.get('name')?.errors?.['required']">Nama jasa wajib diisi.</span>
+            <span *ngIf="productForm.get('name')?.errors?.['minlength']">Minimal 2 karakter.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group col-half">
+          <label for="prodPrice">Harga / Tarif (IDR) <span class="required">*</span></label>
+          <input
+            id="prodPrice"
+            type="number"
+            min="0"
+            class="form-control"
+            formControlName="price"
+            placeholder="0"
+            [class.is-invalid]="productForm.get('price')?.touched && productForm.get('price')?.invalid"
+          />
+          <div
+            *ngIf="productForm.get('price')?.touched && productForm.get('price')?.invalid"
+            class="invalid-feedback"
+          >
+            Harga valid tidak boleh kurang dari 0.
+          </div>
+        </div>
+
+        <div class="form-group col-half">
+          <label for="prodSlug">Slug (URL)</label>
+          <input
+            id="prodSlug"
+            type="text"
+            class="form-control"
+            formControlName="slug"
+            placeholder="Contoh: jasa-rias-pengantin-modern (opsional)"
+          />
+          <small class="form-hint">Otomatis di-generate dari nama jika kosong.</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="prodDesc">Deskripsi Layanan</label>
+        <textarea
+          id="prodDesc"
+          rows="3"
+          class="form-control"
+          formControlName="description"
+          placeholder="Jelaskan detail fasilitas, durasi, atau spesifikasi layanan..."
+        ></textarea>
+      </div>
+
+      <!-- Image Upload Component -->
+      <div class="form-group">
+        <label>Foto / Gambar Layanan</label>
+        <div class="image-upload-wrapper">
+          <div class="preview-box" *ngIf="imagePreviewUrl">
+            <img [src]="imagePreviewUrl" alt="Preview Gambar Jasa" />
+            <button type="button" class="btn-remove-img" (click)="removeImage()" title="Hapus gambar">
+              <ion-icon name="trash-outline" aria-hidden="true"></ion-icon>
+            </button>
+          </div>
+
+          <div class="upload-controls">
+            <label class="btn-upload-file" [class.disabled]="uploadingImage">
+              <ion-icon name="cloud-upload-outline" aria-hidden="true"></ion-icon>
+              {{ uploadingImage ? 'Mengunggah...' : 'Pilih Foto Gambar' }}
+              <input type="file" accept="image/*" (change)="onFileSelected($event)" [disabled]="uploadingImage" hidden />
+            </label>
+            <span class="upload-hint">Format JPG/PNG/WEBP, Maks. 5MB</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="is_active" />
+          <span>Tampilkan jasa ini di katalog publik (Aktif)</span>
+        </label>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeModal()" [disabled]="submitting">
+          Batal
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="submitting || uploadingImage">
+          <ion-icon *ngIf="submitting" name="refresh-outline" class="icon-spin mr-1" aria-hidden="true"></ion-icon>
+          {{ submitting ? 'Menyimpan...' : isEditing ? 'Simpan Perubahan' : 'Tambah Jasa' }}
+        </button>
+      </div>
+    </form>
+  </ng-template>
+</ion-modal>

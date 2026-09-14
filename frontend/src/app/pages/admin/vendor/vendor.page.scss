@@ -1,1 +1,24 @@
-@use '../shared/admin-crud-page.scss';
+@use '../shared/admin-crud-page.scss' as *;
+
+/* Vendor page specific styles */
+.vendor-name {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.contact-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+  background: #f1f5f9;
+  border-radius: 6px;
+
+  ion-icon {
+    font-size: 14px;
+    color: #2563eb;
+  }
+}

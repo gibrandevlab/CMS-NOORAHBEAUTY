@@ -1,1 +1,30 @@
-@use '../shared/admin-crud-page.scss';
+@use '../shared/admin-crud-page.scss' as *;
+
+/* Jasa Katalog specific styles */
+.item-title {
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.price-cell {
+  font-weight: 700;
+  color: #059669;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+
+  input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #2563eb;
+    cursor: pointer;
+  }
+}

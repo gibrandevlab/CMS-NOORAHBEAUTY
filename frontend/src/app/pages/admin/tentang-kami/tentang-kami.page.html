@@ -1,11 +1,193 @@
-<section class="page-heading">
-  <div><h1>Tentang Kami</h1><p>Kelola konten halaman Tentang Kami.</p></div>
-  <button type="button" class="primary-button">Simpan</button>
-</section>
-<section class="content-panel editor-form">
-  <label for="about-title">Judul</label>
-  <input id="about-title" type="text" placeholder="Judul halaman">
+<ion-refresher slot="fixed" (ionRefresh)="loadAbout($event)">
+  <ion-refresher-content
+    pullingText="Tarik untuk memperbarui"
+    refreshingSpinner="circles"
+    refreshingText="Memuat data profil..."
+  >
+  </ion-refresher-content>
+</ion-refresher>
 
-  <label for="about-content">Isi Tentang Kami</label>
-  <textarea id="about-content" rows="10" placeholder="Tulis konten Tentang Kami"></textarea>
+<section class="page-heading">
+  <div class="heading-text">
+    <h1>Profil Perusahaan</h1>
+    <p>Kelola konten halaman Tentang Kami, Visi Misi, dan informasi kontak resmi perusahaan</p>
+  </div>
+  <div class="heading-actions">
+    <button
+      type="button"
+      class="refresh-btn"
+      (click)="loadAbout()"
+      [disabled]="loading || refreshing"
+      title="Perbarui Data"
+    >
+      <ion-icon name="refresh-outline" [class.icon-spin]="loading || refreshing" aria-hidden="true"></ion-icon>
+      {{ loading ? 'Memuat...' : refreshing ? 'Memperbarui...' : 'Perbarui' }}
+    </button>
+    <button
+      type="button"
+      class="primary-button"
+      (click)="saveAbout()"
+      [disabled]="submitting || loading"
+    >
+      <ion-icon *ngIf="submitting" name="refresh-outline" class="icon-spin" aria-hidden="true"></ion-icon>
+      <ion-icon *ngIf="!submitting" name="save-outline" aria-hidden="true"></ion-icon>
+      {{ submitting ? 'Menyimpan...' : 'Simpan Perubahan' }}
+    </button>
+  </div>
 </section>
+
+<!-- Error Banner -->
+<div *ngIf="errorMessage" class="error-banner" role="alert">
+  <div class="error-content">
+    <ion-icon name="alert-circle-outline" class="error-icon" aria-hidden="true"></ion-icon>
+    <span>{{ errorMessage }}</span>
+  </div>
+  <button type="button" class="retry-btn" (click)="loadAbout()">Coba Lagi</button>
+</div>
+
+<!-- Skeleton Loading State -->
+<div *ngIf="loading" class="skeleton-form">
+  <div class="form-card">
+    <ion-skeleton-text animated style="width: 30%; height: 24px; margin-bottom: 20px"></ion-skeleton-text>
+    <ion-skeleton-text animated style="width: 100%; height: 40px; margin-bottom: 16px"></ion-skeleton-text>
+    <ion-skeleton-text animated style="width: 100%; height: 100px; margin-bottom: 16px"></ion-skeleton-text>
+  </div>
+  <div class="form-card">
+    <ion-skeleton-text animated style="width: 30%; height: 24px; margin-bottom: 20px"></ion-skeleton-text>
+    <ion-skeleton-text animated style="width: 100%; height: 80px; margin-bottom: 16px"></ion-skeleton-text>
+    <ion-skeleton-text animated style="width: 100%; height: 80px; margin-bottom: 16px"></ion-skeleton-text>
+  </div>
+</div>
+
+<!-- Main Edit Form -->
+<form *ngIf="!loading" [formGroup]="aboutForm" (ngSubmit)="saveAbout()" class="about-form-container">
+  <!-- Card 1: Informasi Perusahaan -->
+  <div class="form-card">
+    <div class="card-title">
+      <ion-icon name="business-outline" aria-hidden="true"></ion-icon>
+      <h2>Identitas & Deskripsi Perusahaan</h2>
+    </div>
+
+    <div class="form-group">
+      <label for="companyName">Nama Resmi Perusahaan <span class="required">*</span></label>
+      <input
+        id="companyName"
+        type="text"
+        class="form-control"
+        formControlName="company_name"
+        placeholder="Contoh: PT Gibran Utama / CMS Gobana Company"
+        [class.is-invalid]="aboutForm.get('company_name')?.touched && aboutForm.get('company_name')?.invalid"
+      />
+      <div
+        *ngIf="aboutForm.get('company_name')?.touched && aboutForm.get('company_name')?.invalid"
+        class="invalid-feedback"
+      >
+        Nama perusahaan wajib diisi.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="companyDesc">Deskripsi Ringkas Perusahaan</label>
+      <textarea
+        id="companyDesc"
+        rows="5"
+        class="form-control"
+        formControlName="description"
+        placeholder="Tuliskan latar belakang, pengalaman, dan keunggulan perusahaan..."
+      ></textarea>
+      <small class="form-hint">Deskripsi ini akan ditampilkan pada halaman utama tentang kami di publik.</small>
+    </div>
+  </div>
+
+  <!-- Card 2: Visi & Misi -->
+  <div class="form-card">
+    <div class="card-title">
+      <ion-icon name="compass-outline" aria-hidden="true"></ion-icon>
+      <h2>Visi & Misi Perusahaan</h2>
+    </div>
+
+    <div class="form-group">
+      <label for="companyVision">Visi Perusahaan</label>
+      <textarea
+        id="companyVision"
+        rows="3"
+        class="form-control"
+        formControlName="vision"
+        placeholder="Contoh: Menjadi penyedia layanan profesional terdepan di Indonesia..."
+      ></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="companyMission">Misi Perusahaan</label>
+      <textarea
+        id="companyMission"
+        rows="4"
+        class="form-control"
+        formControlName="mission"
+        placeholder="Contoh: 1. Memberikan kualitas terbaik. 2. Utamakan kepuasan pelanggan..."
+      ></textarea>
+    </div>
+  </div>
+
+  <!-- Card 3: Kontak & Alamat -->
+  <div class="form-card">
+    <div class="card-title">
+      <ion-icon name="call-outline" aria-hidden="true"></ion-icon>
+      <h2>Kontak & Alamat Kantor</h2>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group col-half">
+        <label for="companyEmail">Email Resmi</label>
+        <input
+          id="companyEmail"
+          type="email"
+          class="form-control"
+          formControlName="email"
+          placeholder="info@ptgibran.com"
+          [class.is-invalid]="aboutForm.get('email')?.touched && aboutForm.get('email')?.invalid"
+        />
+        <div
+          *ngIf="aboutForm.get('email')?.touched && aboutForm.get('email')?.invalid"
+          class="invalid-feedback"
+        >
+          Format email tidak valid.
+        </div>
+      </div>
+
+      <div class="form-group col-half">
+        <label for="companyPhone">Nomor Telepon / WhatsApp</label>
+        <input
+          id="companyPhone"
+          type="text"
+          class="form-control"
+          formControlName="phone"
+          placeholder="+62 858-6918-7340"
+        />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="companyAddress">Alamat Lengkap Kantor</label>
+      <textarea
+        id="companyAddress"
+        rows="3"
+        class="form-control"
+        formControlName="address"
+        placeholder="Jl. Jendral Sudirman No. 100, Jakarta Pusat, DKI Jakarta..."
+      ></textarea>
+    </div>
+  </div>
+
+  <!-- Form Actions Footer -->
+  <div class="form-actions">
+    <button type="button" class="btn-secondary" (click)="loadAbout()" [disabled]="submitting">
+      Reset Form
+    </button>
+    <button type="submit" class="btn-primary" [disabled]="submitting">
+      <ion-icon *ngIf="submitting" name="refresh-outline" class="icon-spin mr-1" aria-hidden="true"></ion-icon>
+      <ion-icon *ngIf="!submitting" name="save-outline" aria-hidden="true"></ion-icon>
+      {{ submitting ? 'Menyimpan...' : 'Simpan Perubahan' }}
+    </button>
+  </div>
+</form>

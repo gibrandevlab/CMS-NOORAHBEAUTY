@@ -18,11 +18,10 @@ async function seed() {
     });
 
     if (!existingUser) {
-      const hashedPassword = await bcrypt.hash(plainPassword, 10);
       await User.create({
         username: adminUsername,
         email: adminEmail,
-        password: hashedPassword,
+        password: plainPassword,
       });
       console.log(`✅ Default admin created: username="${adminUsername}", password="${plainPassword}"`);
     } else {
@@ -38,7 +37,7 @@ async function seed() {
         vision: 'Menjadi mitra konstruksi dan penyedia produk terkemuka.',
         mission: 'Memberikan layanan berkualitas tinggi dan solusi inovatif.',
         address: 'Jl. Utama No. 123, Jakarta',
-        phone: '021-5551234',
+        phone: '+62 858-6918-7340',
         email: 'info@ptgibran.com',
       });
       console.log('✅ Default AboutUs created.');

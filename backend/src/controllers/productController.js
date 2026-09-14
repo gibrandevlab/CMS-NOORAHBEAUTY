@@ -16,7 +16,7 @@ exports.getAll = async (req, res) => {
 
     const products = await Product.findAll({
       where,
-      include: [{ model: Category, as: 'category', attributes: ['id', 'name', 'slug'] }],
+      include: [{ model: Category, as: 'category', attributes: ['id', 'name', 'slug', 'type'] }],
       order: [['id', 'DESC']],
     });
 
@@ -35,7 +35,7 @@ exports.getByIdOrSlug = async (req, res) => {
 
     const product = await Product.findOne({
       where,
-      include: [{ model: Category, as: 'category', attributes: ['id', 'name', 'slug'] }],
+      include: [{ model: Category, as: 'category', attributes: ['id', 'name', 'slug', 'type'] }],
     });
 
     if (!product) {

@@ -1,4 +1,5 @@
-import { Component, inject, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, inject, NgZone, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { AlertController, ToastController } from '@ionic/angular';
@@ -26,8 +27,13 @@ export class AdminBeritaPage implements OnInit {
   private readonly alertCtrl = inject(AlertController);
   private readonly toastCtrl = inject(ToastController);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly changeDetector = inject(ChangeDetectorRef);
+  private readonly zone = inject(NgZone);
 
   @ViewChild('quillEditor') quillEditor?: QuillEditorComponent;
+  @ViewChild('cropCanvas') cropCanvas?: ElementRef<HTMLCanvasElement>;
 
   newsList: News[] = [];
   newsCategories: Category[] = [];
@@ -55,6 +61,27 @@ export class AdminBeritaPage implements OnInit {
   // Preview Modal State
   isPreviewOpen = false;
   previewNewsItem: News | null = null;
+  isImagePreviewOpen = false;
+  imagePreviewUrl = '';
+  imagePreviewAlt = '';
+  isCreatePage = false;
+
+  isCropperOpen = false;
+  cropSourceUrl = '';
+  cropSourceFile: File | null = null;
+  cropUploadKind: 'cover' | 'inline' = 'cover';
+  cropRatio = '16:9';
+  cropZoom = 1;
+  cropPositionX = 50;
+  cropPositionY = 50;
+  cropRatioOptions = [
+    { value: 'original', label: 'Asli' },
+    { value: '1:1', label: '1 : 1' },
+    { value: '4:3', label: '4 : 3' },
+    { value: '16:9', label: '16 : 9' },
+    { value: '3:4', label: '3 : 4' },
+  ];
+  private cropImage = new Image();
 
   // Configuration Toolbar Quill
   quillModules = {
@@ -78,7 +105,13 @@ export class AdminBeritaPage implements OnInit {
   }
 
   ngOnInit() {
+    this.isCreatePage = Boolean(this.route.snapshot.data['createPage']);
     this.loadNewsCategories();
+
+    if (this.isCreatePage) {
+      this.prepareCreateForm();
+      return;
+    }
 
     if (this.newsService.hasCachedData) {
       this.newsList = [...this.newsService.cachedNews];
@@ -107,6 +140,9 @@ export class AdminBeritaPage implements OnInit {
       next: (res) => {
         if (res?.success && Array.isArray(res.data)) {
           this.newsCategories = res.data;
+          if (this.isCreatePage && !this.newsForm.get('category_id')?.value && this.newsCategories.length > 0) {
+            this.newsForm.patchValue({ category_id: this.newsCategories[0].id });
+          }
         }
       },
     });
@@ -190,10 +226,17 @@ export class AdminBeritaPage implements OnInit {
   getImageUrl(imagePath: string | null | undefined): string {
     if (!imagePath) return this.imagePlaceholderUrl;
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('data:')) {
+      if (imagePath.includes('#') && imagePath.includes('/uploads/')) {
+        return imagePath.replace(/#/g, '%23');
+      }
       return imagePath;
     }
-    const backendBase = environment.apiUrl.replace(/\/api$/, '');
-    return `${backendBase}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+    const backendBase = environment.assetUrl || environment.apiUrl.replace(/\/api$/, '');
+    const encodedPath = imagePath
+      .split('/')
+      .map((segment) => encodeURIComponent(decodeURIComponent(segment)))
+      .join('/');
+    return `${backendBase}${encodedPath.startsWith('/') ? '' : '/'}${encodedPath}`;
   }
 
   handleImageError(event: Event): void {
@@ -203,17 +246,48 @@ export class AdminBeritaPage implements OnInit {
     }
   }
 
+  /** Normalisasi URL gambar inline <img src="..."> di dalam HTML content */
+  processContentImageUrls(htmlContent: string | null | undefined): string {
+    if (!htmlContent) return '';
+    const backendBase = environment.assetUrl || environment.apiUrl.replace(/\/api$/, '');
+
+    return htmlContent.replace(/<img([^>]+)src=["']([^"']+)["']/gi, (match, p1, src) => {
+      let finalSrc = src;
+      if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('data:')) {
+        if (src.includes('/uploads/')) {
+          const pathIndex = src.indexOf('/uploads/');
+          const pathPart = src.substring(pathIndex);
+          const encodedPath = pathPart
+            .split('/')
+            .map((seg: string) => encodeURIComponent(decodeURIComponent(seg)))
+            .join('/');
+          finalSrc = `${backendBase}${encodedPath}`;
+        }
+      } else {
+        const cleanPath = src.startsWith('/') ? src : '/' + src;
+        const encodedPath = cleanPath
+          .split('/')
+          .map((seg: string) => encodeURIComponent(decodeURIComponent(seg)))
+          .join('/');
+        finalSrc = `${backendBase}${encodedPath}`;
+      }
+      return `<img${p1}src="${finalSrc}"`;
+    });
+  }
+
   /** Auto-generate Plain Text Excerpt untuk preview list */
   getExcerpt(htmlContent: string | null | undefined, maxLength = 130): string {
     if (!htmlContent) return '-';
-    const plainText = htmlContent.replace(/<[^>]*>/g, '').trim();
+    const textContent = new DOMParser().parseFromString(htmlContent, 'text/html').body.textContent || '';
+    const plainText = textContent.replace(/\s+/g, ' ').trim();
     if (plainText.length <= maxLength) return plainText;
     return plainText.substring(0, maxLength) + '...';
   }
 
-  /** Sanitasi HTML untuk rendered Angular content */
+  /** Sanitasi & Normalisasi HTML untuk rendered Angular content */
   getSanitizedHtml(htmlContent: string | null | undefined): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(htmlContent || '');
+    const processedHtml = this.processContentImageUrls(htmlContent);
+    return this.sanitizer.bypassSecurityTrustHtml(processedHtml);
   }
 
   /** Filter & Pagination Getters */
@@ -265,6 +339,10 @@ export class AdminBeritaPage implements OnInit {
 
   /** Modal Handling */
   openCreateModal() {
+    this.router.navigate(['/admin/berita/tambah']);
+  }
+
+  private prepareCreateForm() {
     this.isEditing = false;
     this.editingId = null;
     this.newsForm.reset({
@@ -275,7 +353,7 @@ export class AdminBeritaPage implements OnInit {
       image: '',
       is_published: true,
     });
-    this.isModalOpen = true;
+    this.isModalOpen = false;
   }
 
   openEditModal(item: News) {
@@ -298,12 +376,151 @@ export class AdminBeritaPage implements OnInit {
     this.uploadingImage = false;
   }
 
+  openImagePreview(item: News) {
+    this.imagePreviewUrl = this.getImageUrl(item.image);
+    this.imagePreviewAlt = item.title;
+    this.isImagePreviewOpen = true;
+  }
+
+  closeImagePreview() {
+    this.isImagePreviewOpen = false;
+    this.imagePreviewUrl = '';
+    this.imagePreviewAlt = '';
+  }
+
   /** Featured Cover Image Upload Handler */
   onFeaturedFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
 
     const file = input.files[0];
+    this.openCropper(file, 'cover');
+    input.value = '';
+  }
+
+  openCropper(file: File, kind: 'cover' | 'inline') {
+    this.cropSourceFile = file;
+    this.cropUploadKind = kind;
+    this.cropRatio = kind === 'cover' ? '16:9' : 'original';
+    this.cropZoom = 1;
+    this.cropPositionX = 50;
+    this.cropPositionY = 50;
+    this.cropSourceUrl = URL.createObjectURL(file);
+    this.cropImage = new Image();
+    this.cropImage.onload = () => {
+      this.zone.run(() => {
+        this.isCropperOpen = true;
+        this.changeDetector.detectChanges();
+        requestAnimationFrame(() => this.drawCropPreview());
+        setTimeout(() => this.drawCropPreview(), 100);
+        setTimeout(() => this.drawCropPreview(), 300);
+      });
+    };
+    this.cropImage.onerror = () => {
+      this.zone.run(() => this.handleError(null, 'File gambar tidak dapat dibaca.'));
+    };
+    this.cropImage.src = this.cropSourceUrl;
+  }
+
+  closeCropper() {
+    this.isCropperOpen = false;
+    if (this.cropSourceUrl) URL.revokeObjectURL(this.cropSourceUrl);
+    this.cropSourceUrl = '';
+    this.cropSourceFile = null;
+  }
+
+  onCropSettingsChange() {
+    this.drawCropPreview();
+  }
+
+  private getCropAspectRatio(): number {
+    if (this.cropRatio === 'original') {
+      return this.cropImage.width / this.cropImage.height || 1;
+    }
+    const [width, height] = this.cropRatio.split(':').map(Number);
+    return width / height;
+  }
+
+  private getCropBounds() {
+    const imageWidth = this.cropImage.width;
+    const imageHeight = this.cropImage.height;
+    const aspectRatio = this.getCropAspectRatio();
+    let cropWidth = imageWidth / this.cropZoom;
+    let cropHeight = cropWidth / aspectRatio;
+
+    if (cropHeight > imageHeight / this.cropZoom) {
+      cropHeight = imageHeight / this.cropZoom;
+      cropWidth = cropHeight * aspectRatio;
+    }
+
+    const maxX = imageWidth - cropWidth;
+    const maxY = imageHeight - cropHeight;
+    return {
+      x: (maxX * this.cropPositionX) / 100,
+      y: (maxY * this.cropPositionY) / 100,
+      width: cropWidth,
+      height: cropHeight,
+    };
+  }
+
+  drawCropPreview() {
+    const canvas = this.cropCanvas?.nativeElement;
+    if (!canvas || !this.cropImage.complete) return;
+    const bounds = this.getCropBounds();
+    const outputWidth = 900;
+    const outputHeight = Math.round(outputWidth / this.getCropAspectRatio());
+    canvas.width = outputWidth;
+    canvas.height = outputHeight;
+    canvas.getContext('2d')?.drawImage(
+      this.cropImage,
+      bounds.x,
+      bounds.y,
+      bounds.width,
+      bounds.height,
+      0,
+      0,
+      outputWidth,
+      outputHeight
+    );
+  }
+
+  applyCrop() {
+    if (!this.cropSourceFile || !this.cropImage.complete) return;
+    const bounds = this.getCropBounds();
+    const canvas = document.createElement('canvas');
+    const outputWidth = 1600;
+    const outputHeight = Math.round(outputWidth / this.getCropAspectRatio());
+    canvas.width = outputWidth;
+    canvas.height = outputHeight;
+    canvas.getContext('2d')?.drawImage(
+      this.cropImage,
+      bounds.x,
+      bounds.y,
+      bounds.width,
+      bounds.height,
+      0,
+      0,
+      outputWidth,
+      outputHeight
+    );
+
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        this.handleError(null, 'Gagal memproses hasil crop gambar.');
+        return;
+      }
+      const originalName = this.cropSourceFile?.name || 'cropped-image';
+      const baseName = originalName.replace(/\.[^.]+$/, '');
+      const croppedFile = new File([blob], `${baseName}.jpg`, {
+        type: 'image/jpeg',
+      });
+      const kind = this.cropUploadKind;
+      this.closeCropper();
+      this.uploadCroppedImage(croppedFile, kind);
+    }, 'image/jpeg', 0.9);
+  }
+
+  private uploadCroppedImage(file: File, kind: 'cover' | 'inline') {
     const currentSlug = this.newsForm.get('slug')?.value || this.slugify(this.newsForm.get('title')?.value || 'berita');
 
     this.uploadingImage = true;
@@ -313,12 +530,23 @@ export class AdminBeritaPage implements OnInit {
       .subscribe({
         next: (res) => {
           if (res.success && res.url) {
-            this.newsForm.patchValue({ image: res.url });
-            this.showToast(`Gambar sampul berhasil diunggah: ${res.filename}`, 'success');
+            if (kind === 'cover') {
+              this.newsForm.patchValue({ image: res.url });
+              this.showToast(`Gambar sampul berhasil diunggah: ${res.filename}`, 'success');
+            } else {
+              const fullUrl = this.getImageUrl(res.url);
+              const quill = this.quillEditor?.quillEditor;
+              if (quill) {
+                const range = quill.getSelection(true);
+                quill.insertEmbed(range.index, 'image', fullUrl);
+                quill.setSelection(range.index + 1);
+              }
+              this.showToast('Gambar berhasil disisipkan ke isi berita.', 'success');
+            }
           }
         },
         error: (err) => {
-          this.handleError(err, 'Gagal mengunggah gambar sampul.');
+          this.handleError(err, kind === 'cover' ? 'Gagal mengunggah gambar sampul.' : 'Gagal mengunggah gambar inline berita.');
         },
       });
   }
@@ -333,27 +561,7 @@ export class AdminBeritaPage implements OnInit {
     fileInput.onchange = () => {
       if (!fileInput.files || fileInput.files.length === 0) return;
       const file = fileInput.files[0];
-      const currentSlug = this.newsForm.get('slug')?.value || this.slugify(this.newsForm.get('title')?.value || 'berita');
-
-      this.showToast('Mengunggah gambar ke dalam editor...', 'warning');
-
-      this.newsService.uploadImage(file, currentSlug).subscribe({
-        next: (res) => {
-          if (res.success && res.url) {
-            const fullUrl = this.getImageUrl(res.url);
-            const quill = this.quillEditor?.quillEditor;
-            if (quill) {
-              const range = quill.getSelection(true);
-              quill.insertEmbed(range.index, 'image', fullUrl);
-              quill.setSelection(range.index + 1);
-            }
-            this.showToast('Gambar berhasil disisipkan ke isi berita.', 'success');
-          }
-        },
-        error: (err) => {
-          this.handleError(err, 'Gagal mengunggah gambar inline berita.');
-        },
-      });
+      this.openCropper(file, 'inline');
     };
   }
 
@@ -378,6 +586,9 @@ export class AdminBeritaPage implements OnInit {
               this.showToast('Berita berhasil diperbarui.', 'success');
               this.closeModal();
               this.syncLocalListAfterUpdate(res.data);
+              if (this.isCreatePage) {
+                this.router.navigate(['/admin/berita']);
+              }
             }
           },
           error: (err) => {
@@ -394,6 +605,9 @@ export class AdminBeritaPage implements OnInit {
               this.showToast('Berita berhasil dibuat.', 'success');
               this.closeModal();
               this.syncLocalListAfterCreate(res.data);
+              if (this.isCreatePage) {
+                this.router.navigate(['/admin/berita']);
+              }
             }
           },
           error: (err) => {

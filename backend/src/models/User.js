@@ -26,7 +26,13 @@ User.init({
   scopes: { withPassword: { attributes: { include: ['password'] } } },
   hooks: {
     async beforeSave(user) {
-      if (user.changed('password')) user.password = await bcrypt.hash(user.password, 12);
+      if (user.changed('password') && user.password) {
+        // Cek jika password belum di-hash dengan bcrypt ($2a$ atau $2b$) untuk mencegah double-hashing
+        const isBcryptHash = typeof user.password === 'string' && (user.password.startsWith('$2a$') || user.password.startsWith('$2b$'));
+        if (!isBcryptHash) {
+          user.password = await bcrypt.hash(user.password, 12);
+        }
+      }
     },
   },
 });

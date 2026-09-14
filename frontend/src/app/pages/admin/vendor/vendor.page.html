@@ -1,10 +1,291 @@
+<ion-refresher slot="fixed" (ionRefresh)="loadVendors($event)">
+  <ion-refresher-content
+    pullingText="Tarik untuk memperbarui"
+    refreshingSpinner="circles"
+    refreshingText="Memuat data vendor..."
+  >
+  </ion-refresher-content>
+</ion-refresher>
+
 <section class="page-heading">
-  <div><h1>Vendor</h1><p>Kelola data vendor.</p></div>
-  <button type="button" class="primary-button">Tambah Vendor</button>
+  <div class="heading-text">
+    <h1>Mitra Vendor</h1>
+    <p>Kelola daftar mitra vendor, supplier, dan penyedia bahan perusahaan</p>
+  </div>
+  <div class="heading-actions">
+    <button
+      type="button"
+      class="refresh-btn"
+      (click)="loadVendors()"
+      [disabled]="loading || refreshing"
+      title="Perbarui Data"
+    >
+      <ion-icon name="refresh-outline" [class.icon-spin]="loading || refreshing" aria-hidden="true"></ion-icon>
+      {{ loading ? 'Memuat...' : refreshing ? 'Memperbarui...' : 'Perbarui' }}
+    </button>
+    <button type="button" class="primary-button" (click)="openCreateModal()">
+      <ion-icon name="add-outline" aria-hidden="true"></ion-icon> Tambah Vendor
+    </button>
+  </div>
 </section>
+
+<!-- Error Banner -->
+<div *ngIf="errorMessage" class="error-banner" role="alert">
+  <div class="error-content">
+    <ion-icon name="alert-circle-outline" class="error-icon" aria-hidden="true"></ion-icon>
+    <span>{{ errorMessage }}</span>
+  </div>
+  <button type="button" class="retry-btn" (click)="loadVendors()">Coba Lagi</button>
+</div>
+
+<!-- Controls Panel: Search & Page Size -->
+<section class="controls-panel">
+  <div class="search-box">
+    <ion-icon name="search-outline" class="search-icon" aria-hidden="true"></ion-icon>
+    <input
+      type="text"
+      class="search-input"
+      placeholder="Cari berdasarkan nama, alamat, atau kontak..."
+      [(ngModel)]="searchQuery"
+      (ngModelChange)="onSearchChange()"
+    />
+    <button *ngIf="searchQuery" class="clear-search" (click)="searchQuery = ''; onSearchChange()">
+      <ion-icon name="close-outline" aria-hidden="true"></ion-icon>
+    </button>
+  </div>
+
+  <div class="page-size-selector">
+    <label for="pageSizeSelect">Tampilkan:</label>
+    <select
+      id="pageSizeSelect"
+      [(ngModel)]="pageSize"
+      (change)="onPageSizeChange()"
+      class="select-input"
+    >
+      <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }} per halaman</option>
+    </select>
+  </div>
+</section>
+
+<!-- Content Panel: Table -->
 <section class="content-panel">
-  <table>
-    <thead><tr><th>Nama Vendor</th><th>Kontak</th><th>Status</th><th>Aksi</th></tr></thead>
-    <tbody><tr><td colspan="4">Belum ada data.</td></tr></tbody>
+  <!-- Skeleton Loading State -->
+  <table *ngIf="loading" class="crud-table">
+    <thead>
+      <tr>
+        <th style="width: 60px">#</th>
+        <th style="width: 70px">Logo</th>
+        <th>Nama Vendor</th>
+        <th>Alamat</th>
+        <th style="width: 160px">Kontak</th>
+        <th style="width: 120px; text-align: center">Aksi</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let i of [1, 2, 3, 4, 5]">
+        <td><ion-skeleton-text animated style="width: 20px; height: 16px"></ion-skeleton-text></td>
+        <td><ion-skeleton-text animated style="width: 48px; height: 48px; border-radius: 6px"></ion-skeleton-text></td>
+        <td><ion-skeleton-text animated style="width: 70%; height: 16px"></ion-skeleton-text></td>
+        <td><ion-skeleton-text animated style="width: 80%; height: 16px"></ion-skeleton-text></td>
+        <td><ion-skeleton-text animated style="width: 100px; height: 16px"></ion-skeleton-text></td>
+        <td style="text-align: center">
+          <ion-skeleton-text animated style="width: 60px; height: 28px; margin: 0 auto; border-radius: 4px"></ion-skeleton-text>
+        </td>
+      </tr>
+    </tbody>
   </table>
+
+  <!-- Data Table -->
+  <div *ngIf="!loading" class="table-responsive">
+    <table class="crud-table">
+      <thead>
+        <tr>
+          <th style="width: 60px">#</th>
+          <th style="width: 70px">Logo</th>
+          <th>Nama Vendor</th>
+          <th>Alamat</th>
+          <th style="width: 160px">Kontak</th>
+          <th style="width: 120px; text-align: center">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let v of paginatedVendors; let i = index">
+          <td class="text-muted">{{ (currentPage - 1) * pageSize + i + 1 }}</td>
+          <td>
+            <div class="logo-box">
+              <img [src]="getLogoUrl(v.logo)" [alt]="v.name" class="logo-img" />
+            </div>
+          </td>
+          <td class="font-medium">
+            <div class="vendor-name">{{ v.name }}</div>
+          </td>
+          <td>
+            <span *ngIf="v.address" class="text-secondary">{{ v.address }}</span>
+            <span *ngIf="!v.address" class="text-muted">-</span>
+          </td>
+          <td>
+            <span *ngIf="v.contact" class="contact-chip">
+              <ion-icon name="call-outline" aria-hidden="true"></ion-icon>
+              {{ v.contact }}
+            </span>
+            <span *ngIf="!v.contact" class="text-muted">-</span>
+          </td>
+          <td style="text-align: center">
+            <div class="action-buttons">
+              <button
+                type="button"
+                class="btn-icon btn-edit"
+                (click)="openEditModal(v)"
+                title="Edit Vendor"
+              >
+                <ion-icon name="create-outline" aria-hidden="true"></ion-icon>
+              </button>
+              <button
+                type="button"
+                class="btn-icon btn-delete"
+                (click)="confirmDelete(v)"
+                title="Hapus Vendor"
+              >
+                <ion-icon name="trash-outline" aria-hidden="true"></ion-icon>
+              </button>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Empty State -->
+        <tr *ngIf="paginatedVendors.length === 0">
+          <td colspan="6" class="empty-state">
+            <ion-icon name="business-outline" class="empty-icon" aria-hidden="true"></ion-icon>
+            <p>
+              {{ searchQuery ? 'Tidak ada vendor yang cocok dengan pencarian.' : 'Belum ada data vendor mitra.' }}
+            </p>
+            <button
+              *ngIf="!searchQuery"
+              type="button"
+              class="btn-link"
+              (click)="openCreateModal()"
+            >
+              + Tambah Vendor Pertama
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination Controls -->
+  <div *ngIf="!loading && filteredVendors.length > 0" class="pagination-footer">
+    <span class="pagination-info">
+      Menampilkan {{ (currentPage - 1) * pageSize + 1 }} -
+      {{ Math.min(currentPage * pageSize, filteredVendors.length) }} dari
+      {{ filteredVendors.length }} data
+    </span>
+
+    <div class="pagination-buttons">
+      <button
+        type="button"
+        class="page-btn"
+        [disabled]="currentPage === 1"
+        (click)="goToPage(currentPage - 1)"
+      >
+        <ion-icon name="chevron-back-outline" aria-hidden="true"></ion-icon>
+      </button>
+      <span class="page-current">{{ currentPage }} / {{ totalPages }}</span>
+      <button
+        type="button"
+        class="page-btn"
+        [disabled]="currentPage === totalPages"
+        (click)="goToPage(currentPage + 1)"
+      >
+        <ion-icon name="chevron-forward-outline" aria-hidden="true"></ion-icon>
+      </button>
+    </div>
+  </div>
 </section>
+
+<!-- Form Modal (Create / Edit) -->
+<ion-modal [isOpen]="isModalOpen" (didDismiss)="closeModal()" class="custom-crud-modal">
+  <ng-template>
+    <div class="modal-header">
+      <h2>{{ isEditing ? 'Edit Mitra Vendor' : 'Tambah Mitra Vendor' }}</h2>
+      <button type="button" class="btn-close" (click)="closeModal()">
+        <ion-icon name="close-outline" aria-hidden="true"></ion-icon>
+      </button>
+    </div>
+
+    <form [formGroup]="vendorForm" (ngSubmit)="saveVendor()" class="modal-body">
+      <div class="form-group">
+        <label for="vName">Nama Vendor / Perusahaan <span class="required">*</span></label>
+        <input
+          id="vName"
+          type="text"
+          class="form-control"
+          formControlName="name"
+          placeholder="Contoh: PT Semen Perkasa / Supplier Kosmetik Indah"
+          [class.is-invalid]="vendorForm.get('name')?.touched && vendorForm.get('name')?.invalid"
+        />
+        <div
+          *ngIf="vendorForm.get('name')?.touched && vendorForm.get('name')?.invalid"
+          class="invalid-feedback"
+        >
+          <span *ngIf="vendorForm.get('name')?.errors?.['required']">Nama vendor wajib diisi.</span>
+          <span *ngIf="vendorForm.get('name')?.errors?.['minlength']">Minimal 2 karakter.</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="vContact">Nomor Kontak / Telepon / Email</label>
+        <input
+          id="vContact"
+          type="text"
+          class="form-control"
+          formControlName="contact"
+          placeholder="Contoh: 081234567890 / sales@vendor.com"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="vAddress">Alamat Kantor / Pabrik</label>
+        <textarea
+          id="vAddress"
+          rows="3"
+          class="form-control"
+          formControlName="address"
+          placeholder="Jl. Industri No. 45, Kompleks Pergudangan Blok B..."
+        ></textarea>
+      </div>
+
+      <!-- Logo Upload Component -->
+      <div class="form-group">
+        <label>Logo Perusahaan Vendor</label>
+        <div class="image-upload-wrapper">
+          <div class="preview-box" *ngIf="logoPreviewUrl">
+            <img [src]="logoPreviewUrl" alt="Preview Logo Vendor" />
+            <button type="button" class="btn-remove-img" (click)="removeLogo()" title="Hapus logo">
+              <ion-icon name="trash-outline" aria-hidden="true"></ion-icon>
+            </button>
+          </div>
+
+          <div class="upload-controls">
+            <label class="btn-upload-file" [class.disabled]="uploadingLogo">
+              <ion-icon name="cloud-upload-outline" aria-hidden="true"></ion-icon>
+              {{ uploadingLogo ? 'Mengunggah...' : 'Pilih Logo File' }}
+              <input type="file" accept="image/*" (change)="onFileSelected($event)" [disabled]="uploadingLogo" hidden />
+            </label>
+            <span class="upload-hint">Format PNG/JPG/SVG/WEBP, Maks. 5MB</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeModal()" [disabled]="submitting">
+          Batal
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="submitting || uploadingLogo">
+          <ion-icon *ngIf="submitting" name="refresh-outline" class="icon-spin mr-1" aria-hidden="true"></ion-icon>
+          {{ submitting ? 'Menyimpan...' : isEditing ? 'Simpan Perubahan' : 'Tambah Vendor' }}
+        </button>
+      </div>
+    </form>
+  </ng-template>
+</ion-modal>

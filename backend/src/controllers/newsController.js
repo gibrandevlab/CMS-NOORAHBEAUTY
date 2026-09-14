@@ -22,9 +22,23 @@ function sanitizeHtmlContent(html) {
  */
 function deleteLocalFile(fileRelativeUrl) {
   if (!fileRelativeUrl || typeof fileRelativeUrl !== 'string') return;
-  if (!fileRelativeUrl.startsWith('/uploads/')) return;
 
-  const filename = path.basename(fileRelativeUrl);
+  let pathname = fileRelativeUrl;
+  try {
+    pathname = new URL(fileRelativeUrl, 'http://localhost').pathname;
+  } catch {
+    return;
+  }
+
+  if (!pathname.startsWith('/uploads/')) return;
+
+  let filename;
+  try {
+    filename = path.basename(decodeURIComponent(pathname));
+  } catch {
+    return;
+  }
+
   const absolutePath = path.join(uploadsDir, filename);
 
   try {
@@ -42,10 +56,10 @@ function deleteLocalFile(fileRelativeUrl) {
 function extractUploadImageUrls(htmlContent) {
   if (!htmlContent) return [];
   const urls = [];
-  const imgRegex = /<img[^>]+src=["'](\/uploads\/[^"']+)["']/gi;
+  const imgRegex = /<img[^>]+src=["']([^"']+)["']/gi;
   let match;
   while ((match = imgRegex.exec(htmlContent)) !== null) {
-    if (match[1]) {
+    if (match[1] && /(?:^https?:\/\/[^/]+)?\/uploads\//i.test(match[1])) {
       urls.push(match[1]);
     }
   }
@@ -67,7 +81,7 @@ exports.getAll = async (req, res) => {
 
     const newsList = await News.findAll({
       where,
-      include: [{ model: Category, as: 'category', attributes: ['id', 'name', 'slug'] }],
+      include: [{ model: Category, as: 'category', attributes: ['id', 'name', 'slug', 'type'] }],
       order: [['id', 'DESC']],
     });
 
@@ -86,7 +100,7 @@ exports.getByIdOrSlug = async (req, res) => {
 
     const newsItem = await News.findOne({
       where,
-      include: [{ model: Category, as: 'category', attributes: ['id', 'name', 'slug'] }],
+      include: [{ model: Category, as: 'category', attributes: ['id', 'name', 'slug', 'type'] }],
     });
 
     if (!newsItem) {

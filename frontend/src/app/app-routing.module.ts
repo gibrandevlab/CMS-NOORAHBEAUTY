@@ -5,67 +5,107 @@ import { AuthGuard } from './guards/auth.guard';
 const routes: Routes = [
   {
     path: 'login',
-    loadChildren: () => import('./pages/admin/login/login.module').then( m => m.LoginPageModule)
+    loadChildren: () => import('./pages/admin/login/login.module').then((m) => m.LoginPageModule),
   },
   {
     path: 'admin',
     canActivate: [AuthGuard],
-    loadComponent: () => import('./layouts/admin-layout/admin-layout.component').then(m => m.AdminLayoutComponent),
+    loadComponent: () =>
+      import('./layouts/admin-layout/admin-layout.component').then((m) => m.AdminLayoutComponent),
     children: [
       {
         path: 'dashboard',
-        loadChildren: () => import('./pages/admin/dashboard/dashboard.module').then(m => m.DashboardPageModule)
+        loadChildren: () =>
+          import('./pages/admin/dashboard/dashboard.module').then((m) => m.DashboardPageModule),
       },
       {
         path: 'kategori-jasa',
-        loadChildren: () => import('./pages/admin/kategori-jasa/kategori-jasa.module').then(m => m.KategoriJasaPageModule)
+        loadChildren: () =>
+          import('./pages/admin/kategori-jasa/kategori-jasa.module').then(
+            (m) => m.KategoriJasaPageModule
+          ),
       },
       {
         path: 'jasa',
-        loadChildren: () => import('./pages/admin/jasa/jasa.module').then(m => m.JasaPageModule)
+        loadChildren: () =>
+          import('./pages/admin/jasa/jasa.module').then((m) => m.JasaPageModule),
       },
       {
         path: 'berita',
-        loadChildren: () => import('./pages/admin/berita/berita.module').then(m => m.BeritaPageModule)
+        loadChildren: () =>
+          import('./pages/admin/berita/berita.module').then((m) => m.BeritaPageModule),
       },
       {
         path: 'vendor',
-        loadChildren: () => import('./pages/admin/vendor/vendor.module').then(m => m.VendorPageModule)
+        loadChildren: () =>
+          import('./pages/admin/vendor/vendor.module').then((m) => m.VendorPageModule),
+      },
+      {
+        path: 'users',
+        loadChildren: () =>
+          import('./pages/admin/users/users.module').then((m) => m.UsersPageModule),
       },
       {
         path: 'tentang-kami',
-        loadChildren: () => import('./pages/admin/tentang-kami/tentang-kami.module').then(m => m.TentangKamiPageModule)
+        loadChildren: () =>
+          import('./pages/admin/tentang-kami/tentang-kami.module').then(
+            (m) => m.TentangKamiPageModule
+          ),
       },
       {
         path: '',
         redirectTo: 'dashboard',
-        pathMatch: 'full'
-      }
-    ]
-  },
-  {
-    path: 'berita',
-    loadChildren: () => import('./pages/public/berita/berita.module').then( m => m.BeritaPageModule)
-  },
-  {
-    path: 'katalog-jasa',
-    loadChildren: () => import('./pages/public/katalog-jasa/katalog-jasa.module').then( m => m.KatalogJasaPageModule)
-  },
-  {
-    path: 'beranda',
-    loadChildren: () => import('./pages/public/beranda/beranda.module').then(m => m.BerandaPageModule)
+        pathMatch: 'full',
+      },
+    ],
   },
   {
     path: '',
-    redirectTo: 'beranda',
-    pathMatch: 'full'
+    loadComponent: () =>
+      import('./layouts/public-layout/public-layout.component').then(
+        (m) => m.PublicLayoutComponent
+      ),
+    children: [
+      {
+        path: 'beranda',
+        loadChildren: () =>
+          import('./pages/public/beranda/beranda.module').then((m) => m.BerandaPageModule),
+      },
+      {
+        path: 'katalog-jasa',
+        loadChildren: () =>
+          import('./pages/public/katalog-jasa/katalog-jasa.module').then(
+            (m) => m.KatalogJasaPageModule
+          ),
+      },
+      {
+        path: 'katalog-jasa/:slug',
+        loadChildren: () =>
+          import('./pages/public/katalog-jasa/katalog-jasa.module').then(
+            (m) => m.KatalogJasaPageModule
+          ),
+      },
+      {
+        path: 'berita',
+        loadChildren: () =>
+          import('./pages/public/berita/berita.module').then((m) => m.BeritaPageModule),
+      },
+      {
+        path: 'berita/:slug',
+        loadChildren: () =>
+          import('./pages/public/berita/berita.module').then((m) => m.BeritaPageModule),
+      },
+      {
+        path: '',
+        redirectTo: 'beranda',
+        pathMatch: 'full',
+      },
+    ],
   },
 ];
 
 @NgModule({
-  imports: [
-    RouterModule.forRoot(routes, { preloadingStrategy: PreloadAllModules })
-  ],
-  exports: [RouterModule]
+  imports: [RouterModule.forRoot(routes, { preloadingStrategy: PreloadAllModules })],
+  exports: [RouterModule],
 })
-export class AppRoutingModule { }
+export class AppRoutingModule {}

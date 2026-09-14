@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
   Category,
@@ -28,7 +28,7 @@ export class CategoryService {
 
   /** Status apakah sudah ada data tersimpan di cache */
   get hasCachedData(): boolean {
-    return this._cache.value !== null && this._cache.value.length >= 0;
+    return this._cache.value !== null && this._cache.value.length > 0;
   }
 
   /** Mengambil data cache saat ini secara sinkron */
@@ -61,7 +61,9 @@ export class CategoryService {
    */
   getCategories(type?: CategoryType): Observable<CategoryListResponse> {
     const url = type ? `${this.adminApiUrl}?type=${type}` : this.adminApiUrl;
+    const publicUrl = type ? `${this.publicApiUrl}?type=${type}` : this.publicApiUrl;
     return this.http.get<CategoryListResponse>(url).pipe(
+      catchError(() => this.http.get<CategoryListResponse>(publicUrl)),
       tap((response) => {
         if (response?.success && Array.isArray(response.data)) {
           this.updateCache(response.data);

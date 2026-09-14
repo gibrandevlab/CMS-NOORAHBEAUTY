@@ -1,0 +1,136 @@
+<div class="public-shell">
+  <!-- Top Announcement Bar -->
+  <div class="top-announcement-bar py-2 text-center text-light">
+    <div class="container d-flex align-items-center justify-content-center gap-2">
+      <span class="badge bg-rose-gold text-dark font-monospace me-1">SPECIAL OFFER</span>
+      <span class="small font-subtitle">✨ Reservasi Makeup & Hairdo Wedding, Graduation & Event Semarang via WhatsApp</span>
+    </div>
+  </div>
+
+  <!-- Header Navbar -->
+  <header class="public-header sticky-top">
+    <div class="container d-flex align-items-center justify-content-between py-3">
+      <!-- Brand Logo & Title -->
+      <a routerLink="/beranda" class="brand-link d-flex align-items-center gap-3 text-decoration-none" (click)="closeMenu()">
+        <div class="brand-avatar-box">
+          <img src="assets/images/LOGO NB.png" alt="Noorah Beauty MUA" class="brand-avatar-img" (error)="$any($event.target).src='https://placehold.net/100x100.png'" />
+        </div>
+        <div>
+          <span class="brand-title d-block fw-bold fs-5 text-gold">
+            {{ aboutInfo?.company_name || 'Noorah Beauty MUA' }}
+          </span>
+          <small class="brand-tagline text-muted small d-block">
+            MUA & Hairdo Semarang
+          </small>
+        </div>
+      </a>
+
+      <!-- Mobile Menu Toggle Button -->
+      <button type="button" class="btn btn-outline-rose d-md-none" (click)="toggleMenu()" aria-label="Toggle navigation">
+        <ion-icon [name]="isMenuOpen ? 'close-outline' : 'menu-outline'" class="fs-4"></ion-icon>
+      </button>
+
+      <!-- Nav Links Desktop -->
+      <nav class="d-none d-md-flex align-items-center gap-4">
+        <a routerLink="/beranda" routerLinkActive="active-nav" [routerLinkActiveOptions]="{exact: true}" class="public-nav-link">Beranda</a>
+        <a routerLink="/katalog-jasa" routerLinkActive="active-nav" class="public-nav-link">Katalog Jasa & Nails</a>
+        <a routerLink="/berita" routerLinkActive="active-nav" class="public-nav-link">Tips & Portofolio</a>
+        <a [href]="getWhatsAppUrl()" target="_blank" rel="noopener" class="btn btn-rose-gold btn-sm px-3 py-2 rounded-pill d-flex align-items-center gap-2">
+          <ion-icon name="logo-whatsapp" class="fs-5"></ion-icon>
+          <span>Book via WhatsApp</span>
+        </a>
+      </nav>
+    </div>
+
+    <!-- Nav Links Mobile Dropdown -->
+    <div class="mobile-nav-menu d-md-none bg-surface p-3" [class.show]="isMenuOpen">
+      <div class="d-flex flex-column gap-3">
+        <a routerLink="/beranda" routerLinkActive="active-nav" [routerLinkActiveOptions]="{exact: true}" class="public-nav-link" (click)="closeMenu()">
+          <ion-icon name="home-outline" class="me-2"></ion-icon>Beranda
+        </a>
+        <a routerLink="/katalog-jasa" routerLinkActive="active-nav" class="public-nav-link" (click)="closeMenu()">
+          <ion-icon name="grid-outline" class="me-2"></ion-icon>Katalog Jasa & Nails
+        </a>
+        <a routerLink="/berita" routerLinkActive="active-nav" class="public-nav-link" (click)="closeMenu()">
+          <ion-icon name="newspaper-outline" class="me-2"></ion-icon>Tips & Portofolio
+        </a>
+        <a [href]="getWhatsAppUrl()" target="_blank" rel="noopener" class="btn btn-rose-gold w-100 rounded-pill d-flex align-items-center justify-content-center gap-2 mt-2" (click)="closeMenu()">
+          <ion-icon name="logo-whatsapp" class="fs-5"></ion-icon>
+          <span>Book via WhatsApp</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main View Container -->
+  <main class="public-main-content">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- Footer -->
+  <footer class="public-footer text-light pt-5 pb-4 mt-5">
+    <div class="container">
+      <div class="row g-4 mb-5">
+        <!-- Col 1: Brand & Bio -->
+        <div class="col-lg-4 col-md-6">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="brand-avatar-box border-rose">
+              <img src="assets/images/LOGO NB.png" alt="Noorah Beauty MUA" class="brand-avatar-img" (error)="$any($event.target).src='https://placehold.net/100x100.png'" />
+            </div>
+            <h4 class="text-gold fw-bold mb-0">Noorah Beauty MUA</h4>
+          </div>
+          <p class="text-secondary small mb-3 lead-normal">
+            {{ aboutInfo?.description || 'Your beauty partner — Penyedia layanan Makeup Artist (MUA), Hairdo profesional, dan Custom Press-on Nails berkualitas di Semarang.' }}
+          </p>
+
+          <div class="d-flex align-items-center gap-2">
+            <a [href]="getWhatsAppUrl()" target="_blank" rel="noopener" class="social-icon-btn text-success" title="WhatsApp Business">
+              <ion-icon name="logo-whatsapp"></ion-icon>
+            </a>
+            <a href="https://instagram.com/noorahbeauty_mua" target="_blank" rel="noopener" class="social-icon-btn text-rose" title="Instagram @noorahbeauty_mua">
+              <ion-icon name="logo-instagram"></ion-icon>
+            </a>
+          </div>
+        </div>
+
+        <!-- Col 2: Quick Links -->
+        <div class="col-lg-3 col-md-6">
+          <h5 class="text-gold fw-semibold mb-3">Navigasi Utama</h5>
+          <ul class="list-unstyled footer-links">
+            <li class="mb-2"><a routerLink="/beranda" class="text-secondary text-decoration-none">Beranda Utama</a></li>
+            <li class="mb-2"><a routerLink="/katalog-jasa" class="text-secondary text-decoration-none">Katalog Jasa & Layanan</a></li>
+            <li class="mb-2"><a routerLink="/berita" class="text-secondary text-decoration-none">Beauty Tips & Artikel</a></li>
+            <li class="mb-2"><a routerLink="/login" class="text-secondary text-decoration-none">Portal Admin CMS</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 3: Contact & Studio Info -->
+        <div class="col-lg-5 col-md-12">
+          <h5 class="text-gold fw-semibold mb-3">Studio & Kontak</h5>
+          <div class="d-flex flex-column gap-2 text-secondary small">
+            <div class="d-flex gap-2">
+              <ion-icon name="location-outline" class="fs-5 text-rose flex-shrink-0 mt-1"></ion-icon>
+              <span>Kos Putri 2 Semarang, UNNES, Gunung Pati</span>
+            </div>
+            <div class="d-flex gap-2">
+              <ion-icon name="call-outline" class="fs-5 text-rose flex-shrink-0"></ion-icon>
+              <span>+62 858-6918-7340</span>
+            </div>
+            <div class="d-flex gap-2" *ngIf="aboutInfo?.email">
+              <ion-icon name="mail-outline" class="fs-5 text-rose flex-shrink-0"></ion-icon>
+              <span>{{ aboutInfo.email }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="border-secondary opacity-25" />
+
+      <!-- Copyright Bar -->
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pt-2 text-secondary small">
+        <span>© {{ Math.floor(2026) }} Noorah Beauty MUA. All rights reserved.</span>
+        <span>Crafted with Elegance for Beauty & Hairdo Portfolio.</span>
+      </div>
+    </div>
+  </footer>
+</div>

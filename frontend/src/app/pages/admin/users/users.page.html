@@ -1,0 +1,277 @@
+<ion-refresher slot="fixed" (ionRefresh)="loadUsers($event)">
+  <ion-refresher-content
+    pullingText="Tarik untuk memperbarui"
+    refreshingSpinner="circles"
+    refreshingText="Memuat data user..."
+  >
+  </ion-refresher-content>
+</ion-refresher>
+
+<section class="page-heading">
+  <div class="heading-text">
+    <h1>Kelola User Admin</h1>
+    <p>Kelola akun pengguna dan hak akses administrator panel CMS</p>
+  </div>
+  <div class="heading-actions">
+    <button
+      type="button"
+      class="refresh-btn"
+      (click)="loadUsers()"
+      [disabled]="loading || refreshing"
+      title="Perbarui Data"
+    >
+      <ion-icon name="refresh-outline" [class.icon-spin]="loading || refreshing" aria-hidden="true"></ion-icon>
+      {{ loading ? 'Memuat...' : refreshing ? 'Memperbarui...' : 'Perbarui' }}
+    </button>
+    <button type="button" class="primary-button" (click)="openCreateModal()">
+      <ion-icon name="add-outline" aria-hidden="true"></ion-icon> Tambah User
+    </button>
+  </div>
+</section>
+
+<!-- Error Banner -->
+<div *ngIf="errorMessage" class="error-banner" role="alert">
+  <div class="error-content">
+    <ion-icon name="alert-circle-outline" class="error-icon" aria-hidden="true"></ion-icon>
+    <span>{{ errorMessage }}</span>
+  </div>
+  <button type="button" class="retry-btn" (click)="loadUsers()">Coba Lagi</button>
+</div>
+
+<!-- Controls Panel: Search & Page Size -->
+<section class="controls-panel">
+  <div class="search-box">
+    <ion-icon name="search-outline" class="search-icon" aria-hidden="true"></ion-icon>
+    <input
+      type="text"
+      class="search-input"
+      placeholder="Cari berdasarkan username atau email..."
+      [(ngModel)]="searchQuery"
+      (ngModelChange)="onSearchChange()"
+    />
+    <button *ngIf="searchQuery" class="clear-search" (click)="searchQuery = ''; onSearchChange()">
+      <ion-icon name="close-outline" aria-hidden="true"></ion-icon>
+    </button>
+  </div>
+
+  <div class="page-size-selector">
+    <label for="pageSizeSelect">Tampilkan:</label>
+    <select
+      id="pageSizeSelect"
+      [(ngModel)]="pageSize"
+      (change)="onPageSizeChange()"
+      class="select-input"
+    >
+      <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }} per halaman</option>
+    </select>
+  </div>
+</section>
+
+<!-- Content Panel: Table -->
+<section class="content-panel">
+  <!-- Skeleton Loading State -->
+  <table *ngIf="loading" class="crud-table">
+    <thead>
+      <tr>
+        <th style="width: 60px">#</th>
+        <th>Username</th>
+        <th>Email</th>
+        <th style="width: 120px">Role</th>
+        <th style="width: 160px">Dibuat</th>
+        <th style="width: 120px; text-align: center">Aksi</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let i of [1, 2, 3]">
+        <td><ion-skeleton-text animated style="width: 20px; height: 16px"></ion-skeleton-text></td>
+        <td><ion-skeleton-text animated style="width: 60%; height: 16px"></ion-skeleton-text></td>
+        <td><ion-skeleton-text animated style="width: 80%; height: 16px"></ion-skeleton-text></td>
+        <td><ion-skeleton-text animated style="width: 70px; height: 24px; border-radius: 12px"></ion-skeleton-text></td>
+        <td><ion-skeleton-text animated style="width: 100px; height: 16px"></ion-skeleton-text></td>
+        <td style="text-align: center">
+          <ion-skeleton-text animated style="width: 60px; height: 28px; margin: 0 auto; border-radius: 4px"></ion-skeleton-text>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Data Table -->
+  <div *ngIf="!loading" class="table-responsive">
+    <table class="crud-table">
+      <thead>
+        <tr>
+          <th style="width: 60px">#</th>
+          <th>Username</th>
+          <th>Email</th>
+          <th style="width: 120px">Role</th>
+          <th style="width: 160px">Dibuat</th>
+          <th style="width: 120px; text-align: center">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of paginatedUsers; let idx = index">
+          <td class="text-muted">{{ (currentPage - 1) * pageSize + idx + 1 }}</td>
+          <td class="font-medium">
+            <div class="user-info-cell">
+              <span class="user-avatar-small">{{ user.username.charAt(0).toUpperCase() }}</span>
+              <span class="username-text">{{ user.username }}</span>
+              <span *ngIf="user.id === currentUserId" class="current-user-badge" title="Akun Anda yang sedang aktif">Anda</span>
+            </div>
+          </td>
+          <td>{{ user.email }}</td>
+          <td>
+            <span class="role-badge">
+              <ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon> Admin
+            </span>
+          </td>
+          <td class="text-secondary">{{ (user.created_at || user.createdAt) | date : 'dd MMM yyyy, HH:mm' }}</td>
+          <td style="text-align: center">
+            <div class="action-buttons">
+              <button
+                type="button"
+                class="btn-icon btn-edit"
+                (click)="openEditModal(user)"
+                title="Edit User"
+              >
+                <ion-icon name="create-outline" aria-hidden="true"></ion-icon>
+              </button>
+              <button
+                type="button"
+                class="btn-icon btn-delete"
+                (click)="confirmDelete(user)"
+                [disabled]="user.id === currentUserId"
+                [title]="user.id === currentUserId ? 'Anda tidak dapat menghapus akun Anda sendiri' : 'Hapus User'"
+              >
+                <ion-icon name="trash-outline" aria-hidden="true"></ion-icon>
+              </button>
+            </div>
+          </td>
+        </tr>
+
+        <tr *ngIf="filteredUsers.length === 0">
+          <td colspan="6" class="empty-state">
+            <ion-icon name="person-outline" class="empty-icon" aria-hidden="true"></ion-icon>
+            <p *ngIf="searchQuery">Tidak ada user yang cocok dengan pencarian "{{ searchQuery }}".</p>
+            <p *ngIf="!searchQuery">Belum ada data user admin.</p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination Footer -->
+  <div *ngIf="!loading && filteredUsers.length > 0" class="pagination-footer">
+    <div class="pagination-info">
+      Menampilkan {{ startIndex }} - {{ endIndex }} dari {{ filteredUsers.length }} user
+    </div>
+    <div class="pagination-controls">
+      <button
+        type="button"
+        class="page-btn"
+        (click)="prevPage()"
+        [disabled]="currentPage === 1"
+      >
+        <ion-icon name="chevron-back-outline" aria-hidden="true"></ion-icon> Prev
+      </button>
+      <span class="page-indicator">Halaman {{ currentPage }} dari {{ totalPages }}</span>
+      <button
+        type="button"
+        class="page-btn"
+        (click)="nextPage()"
+        [disabled]="currentPage === totalPages"
+      >
+        Next <ion-icon name="chevron-forward-outline" aria-hidden="true"></ion-icon>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- Modal Tambah / Edit User -->
+<ion-modal [isOpen]="isModalOpen" (didDismiss)="closeModal()">
+  <ng-template>
+    <div class="modal-header">
+      <h2>{{ isEditing ? 'Edit User Admin' : 'Tambah User Admin Baru' }}</h2>
+      <button type="button" class="close-btn" (click)="closeModal()">
+        <ion-icon name="close-outline" aria-hidden="true"></ion-icon>
+      </button>
+    </div>
+
+    <form [formGroup]="userForm" (ngSubmit)="submitForm()" class="modal-body">
+      <!-- Username Field -->
+      <div class="form-group">
+        <label for="username">Username <span class="required">*</span></label>
+        <input
+          id="username"
+          type="text"
+          class="form-control"
+          [class.is-invalid]="isFieldInvalid('username')"
+          placeholder="Masukkan username (contoh: admin2)"
+          formControlName="username"
+        />
+        <div *ngIf="isFieldInvalid('username')" class="invalid-feedback">
+          <span *ngIf="userForm.get('username')?.errors?.['required']">Username wajib diisi.</span>
+          <span *ngIf="userForm.get('username')?.errors?.['minlength']">Username minimal 3 karakter.</span>
+          <span *ngIf="userForm.get('username')?.errors?.['maxlength']">Username maksimal 50 karakter.</span>
+        </div>
+      </div>
+
+      <!-- Email Field -->
+      <div class="form-group">
+        <label for="email">Email <span class="required">*</span></label>
+        <input
+          id="email"
+          type="email"
+          class="form-control"
+          [class.is-invalid]="isFieldInvalid('email')"
+          placeholder="Masukkan email (contoh: admin2@nooraahbeauty.com)"
+          formControlName="email"
+        />
+        <div *ngIf="isFieldInvalid('email')" class="invalid-feedback">
+          <span *ngIf="userForm.get('email')?.errors?.['required']">Email wajib diisi.</span>
+          <span *ngIf="userForm.get('email')?.errors?.['email']">Format email tidak valid.</span>
+        </div>
+      </div>
+
+      <!-- Password Field -->
+      <div class="form-group">
+        <label for="password">
+          Password <span *ngIf="!isEditing" class="required">*</span>
+          <small *ngIf="isEditing" class="text-muted-help">(Kosongkan jika tidak ingin mengubah password)</small>
+        </label>
+        <div class="password-input-group">
+          <input
+            id="password"
+            [type]="showPassword ? 'text' : 'password'"
+            class="form-control"
+            [class.is-invalid]="isFieldInvalid('password')"
+            [placeholder]="isEditing ? 'Masukkan password baru (opsional)' : 'Masukkan password (minimal 6 karakter)'"
+            formControlName="password"
+          />
+          <button
+            type="button"
+            class="toggle-password-btn"
+            (click)="toggleShowPassword()"
+            title="Tampilkan / Sembunyikan Password"
+          >
+            <ion-icon [name]="showPassword ? 'eye-off-outline' : 'eye-outline'" aria-hidden="true"></ion-icon>
+          </button>
+        </div>
+        <div *ngIf="isFieldInvalid('password')" class="invalid-feedback">
+          <span *ngIf="userForm.get('password')?.errors?.['required']">Password wajib diisi untuk user baru.</span>
+          <span *ngIf="userForm.get('password')?.errors?.['minlength']">Password minimal 6 karakter.</span>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button type="button" class="secondary-button" (click)="closeModal()" [disabled]="submitting">
+          Batal
+        </button>
+        <button type="submit" class="primary-button" [disabled]="submitting || userForm.invalid">
+          <ion-icon *ngIf="submitting" name="refresh-outline" class="icon-spin" aria-hidden="true"></ion-icon>
+          {{ submitting ? 'Menyimpan...' : isEditing ? 'Simpan Perubahan' : 'Tambah User' }}
+        </button>
+      </div>
+    </form>
+  </ng-template>
+</ion-modal>

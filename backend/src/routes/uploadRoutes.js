@@ -17,16 +17,24 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     const rawSlug = req.body.slug || req.query.slug || 'berita';
     const cleanSlug = createSlug(rawSlug) || 'berita';
-    const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
 
-    // Cari file yang sudah ada dengan pola slug#*
+    let ext = path.extname(file.originalname || '').toLowerCase();
+    if (!ext || ext === '.') {
+      if (file.mimetype === 'image/png') ext = '.png';
+      else if (file.mimetype === 'image/webp') ext = '.webp';
+      else if (file.mimetype === 'image/gif') ext = '.gif';
+      else if (file.mimetype === 'image/svg+xml') ext = '.svg';
+      else ext = '.jpg';
+    }
+
     try {
+      // Gunakan pemisah '_' agar URL valid dan tidak terpotong hash anchor '#' di browser
       const existingFiles = fs.readdirSync(uploadsDir).filter((filename) => {
-        return filename.startsWith(`${cleanSlug}#`);
+        return filename.startsWith(`${cleanSlug}_`) || filename.startsWith(`${cleanSlug}#`);
       });
 
       let maxIndex = 0;
-      const regex = new RegExp(`^${cleanSlug}#(\\d+)\\.`, 'i');
+      const regex = new RegExp(`^${cleanSlug}[_#](\\d+)\\.`, 'i');
       existingFiles.forEach((f) => {
         const match = f.match(regex);
         if (match && match[1]) {
@@ -36,10 +44,10 @@ const storage = multer.diskStorage({
       });
 
       const nextIndex = maxIndex + 1;
-      const newFilename = `${cleanSlug}#${nextIndex}${ext}`;
+      const newFilename = `${cleanSlug}_${nextIndex}${ext}`;
       cb(null, newFilename);
     } catch (err) {
-      const fallbackName = `${cleanSlug}#${Date.now()}${ext}`;
+      const fallbackName = `${cleanSlug}_${Date.now()}${ext}`;
       cb(null, fallbackName);
     }
   },
@@ -47,12 +55,13 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (req, file, cb) => {
-    const allowed = /jpeg|jpg|png|gif|webp|svg/;
-    const extname = allowed.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowed.test(file.mimetype);
-    if (extname && mimetype) {
+    const isImageMime = file.mimetype && (file.mimetype.startsWith('image/') || file.mimetype === 'application/octet-stream');
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    const allowedExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', ''];
+
+    if (isImageMime || allowedExts.includes(ext)) {
       return cb(null, true);
     }
     cb(new Error('Hanya file gambar (jpg, png, gif, webp, svg) yang diizinkan!'));
@@ -72,6 +81,21 @@ router.post('/', upload.single('image'), (req, res) => {
     url: fileUrl,
     filename: req.file.filename,
   });
+});
+
+router.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    const message = err.code === 'LIMIT_FILE_SIZE'
+      ? 'Gambar terlalu besar. Maksimal ukuran file adalah 10MB.'
+      : `Upload gambar gagal: ${err.message}`;
+    return res.status(400).json({ success: false, message });
+  }
+
+  if (err) {
+    return res.status(400).json({ success: false, message: err.message || 'Upload gambar gagal.' });
+  }
+
+  return next();
 });
 
 module.exports = router;

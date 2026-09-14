@@ -103,7 +103,7 @@ export class NewsService {
    * Mengubah data berita
    */
   updateNews(id: number, dto: UpdateNewsDto): Observable<NewsResponse> {
-    return this.http.put<NewsResponse>(`${this.publicApiUrl}/${id}`, dto).pipe(
+    return this.http.put<NewsResponse>(`${this.adminApiUrl}/${id}`, dto).pipe(
       tap((response) => {
         if (response?.success && response.data) {
           const updatedList = this.cachedNews.map((item) =>
@@ -119,7 +119,7 @@ export class NewsService {
    * Menghapus berita beserta file gambar fisiknya di server
    */
   deleteNews(id: number): Observable<{ success: boolean; message?: string }> {
-    return this.http.delete<{ success: boolean; message?: string }>(`${this.publicApiUrl}/${id}`).pipe(
+    return this.http.delete<{ success: boolean; message?: string }>(`${this.adminApiUrl}/${id}`).pipe(
       tap((response) => {
         if (response?.success) {
           const updatedList = this.cachedNews.filter((item) => item.id !== id);
@@ -139,12 +139,14 @@ export class NewsService {
   /**
    * Upload file gambar ke backend (Otomatis dinamai slugberita#index.ext oleh backend)
    */
-  uploadImage(file: File, slug?: string): Observable<UploadImageResponse> {
+  uploadImage(file: File | Blob, slug?: string): Observable<UploadImageResponse> {
     const formData = new FormData();
-    formData.append('image', file);
+    const fileName = (file as File).name || 'image.jpg';
     if (slug) {
       formData.append('slug', slug);
     }
+    // Multer membaca field secara berurutan saat menentukan nama file.
+    formData.append('image', file, fileName);
 
     return this.http.post<UploadImageResponse>(this.uploadApiUrl, formData);
   }

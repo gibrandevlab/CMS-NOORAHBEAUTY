@@ -28,7 +28,7 @@ VALUES (
   'Menjadi brand kecantikan terpercaya nomor satu di Indonesia yang menginspirasi setiap wanita untuk tampil percaya diri dengan produk perawatan halal dan berkualitas premium.',
   'Menghadirkan produk kecantikan inovatif berbahan alami yang aman, efektif, dan terjangkau. Memberikan pelayanan terbaik kepada pelanggan dan mitra bisnis. Mendukung pertumbuhan UMKM kecantikan lokal Indonesia.',
   'Jl. Kecantikan Indah No. 88, Kelurahan Cantik, Kecamatan Sehat, Kota Jakarta Selatan 12345',
-  '021-5551234',
+  '+62 858-6918-7340',
   'info@nooraahbeauty.com',
   NOW()
 )
@@ -53,8 +53,8 @@ INSERT IGNORE INTO `categories` (`name`, `slug`, `type`, `created_at`, `updated_
 ('Suplemen & Minuman', 'suplemen-dan-minuman',   'PRODUCT', NOW(), NOW()),
 ('Berita Perusahaan',  'berita-perusahaan',      'NEWS',    NOW(), NOW()),
 ('Tips Kecantikan',    'tips-kecantikan',        'NEWS',    NOW(), NOW()),
-('Promo & Event',      'promo-dan-event',        'NEWS',    NOW(), NOW());
-
+('Promo & Event',      'promo-dan-event',        'NEWS',    NOW(), NOW()),
+('Portofolio', 'portofolio', 'NEWS', NOW(), NOW());
 -- ------------------------------------------------------------
 -- 4. PRODUCTS
 -- (category_id mengacu ke urutan insert di atas)

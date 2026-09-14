@@ -88,7 +88,7 @@ v (1:N)          v (1:N)    |
 * `vision`: `TEXT`, Nullable.
 * `mission`: `TEXT`, Nullable.
 * `address`: `TEXT`, Nullable (Lokasi Operasional: Semarang, Jawa Tengah).
-* `phone`: `VARCHAR(50)`, Nullable (Nomor Kontak WhatsApp: `6285869187340`).
+* `phone`: `VARCHAR(50)`, Nullable (Nomor Kontak WhatsApp: `+62 858-6918-7340`).
 * `email`: `VARCHAR(100)`, Nullable.
 * `updated_at`: `TIMESTAMP`, Nullable, Auto-update on modification.
 
@@ -211,7 +211,7 @@ Design System mengusung estetika *Beauty Dark Elegance & Rose Luxury*:
    * Display Avatar/Logo Noorah Beauty MUA.
    * Store Name: "Noorah Beauty MUA".
    * Description: "Your beauty partner — MUA & Hairdo Semarang".
-   * Direct CTA Button: "Book via WhatsApp" (`https://wa.me/6285869187340`).
+  * Direct CTA Button: "Book via WhatsApp" (`https://wa.me/6285869187340`).
 2. **Highlights Navigation Bar:**
    * Kategori Showcase: *Makeup*, *Hairdo*, *Custom Press-on Nails*, *Birthday*, *Photoshoot*, *Review/Testimoni*.
 3. **Instagram-Style Portfolio Grid:**
