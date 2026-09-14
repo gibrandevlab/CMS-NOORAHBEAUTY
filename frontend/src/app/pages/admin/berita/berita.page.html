@@ -1,10 +1,468 @@
-<section class="page-heading">
-  <div><h1>Berita</h1><p>Kelola berita dan artikel.</p></div>
-  <button type="button" class="primary-button">Tambah Berita</button>
-</section>
-<section class="content-panel">
-  <table>
-    <thead><tr><th>Judul</th><th>Status</th><th>Tanggal</th><th>Aksi</th></tr></thead>
-    <tbody><tr><td colspan="4">Belum ada data.</td></tr></tbody>
-  </table>
-</section>
+<div class="admin-page">
+  <ion-refresher slot="fixed" (ionRefresh)="loadNews($event)">
+    <ion-refresher-content pullingText="Tarik untuk memperbarui..." refreshingSpinner="circles">
+    </ion-refresher-content>
+  </ion-refresher>
+
+  <!-- Page Heading & Quick Actions -->
+  <section class="page-heading d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+    <div>
+      <h2 class="fw-bold mb-1">Berita & Artikel</h2>
+      <p class="text-muted mb-0">Kelola publikasi berita, konten rich text, dan gambar sampul perusahaan.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-outline-secondary d-flex align-items-center gap-2" (click)="loadNews()" [disabled]="refreshing">
+        <i class="fas fa-sync-alt" [class.fa-spin]="refreshing"></i>
+        <span>Perbarui</span>
+      </button>
+      <button class="btn btn-primary d-flex align-items-center gap-2" (click)="openCreateModal()">
+        <i class="fas fa-plus"></i>
+        <span>+ Tambah Berita</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- Search & Filter Bar -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-3">
+      <div class="row g-3 align-items-center">
+        <!-- Searchbar -->
+        <div class="col-md-5">
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0">
+              <i class="fas fa-search text-muted"></i>
+            </span>
+            <input
+              type="text"
+              class="form-control bg-light border-start-0 ps-0"
+              placeholder="Cari judul berita atau slug..."
+              [(ngModel)]="searchQuery"
+              (ngModelChange)="onFilterChange()"
+            />
+          </div>
+        </div>
+
+        <!-- Filter Category -->
+        <div class="col-md-3 col-6">
+          <select
+            class="form-select"
+            [(ngModel)]="selectedCategoryFilter"
+            (change)="onFilterChange()"
+          >
+            <option value="ALL">Semua Kategori</option>
+            <option *ngFor="let cat of newsCategories" [value]="cat.id">
+              {{ cat.name }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Filter Status -->
+        <div class="col-md-2 col-6">
+          <select
+            class="form-select"
+            [(ngModel)]="selectedStatusFilter"
+            (change)="onFilterChange()"
+          >
+            <option value="ALL">Semua Status</option>
+            <option value="PUBLISHED">Published</option>
+            <option value="DRAFT">Draft</option>
+          </select>
+        </div>
+
+        <!-- Page Size -->
+        <div class="col-md-2 text-end">
+          <select
+            class="form-select form-select-sm d-inline-block w-auto"
+            [(ngModel)]="pageSize"
+            (change)="onFilterChange()"
+          >
+            <option *ngFor="let size of pageSizeOptions" [value]="size">
+              {{ size }} / hal
+            </option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Banner -->
+  <div *ngIf="errorMessage" class="alert alert-danger d-flex align-items-center justify-content-between mb-4 shadow-sm" role="alert">
+    <div>
+      <i class="fas fa-exclamation-triangle me-2"></i>
+      <span>{{ errorMessage }}</span>
+    </div>
+    <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+  </div>
+
+  <!-- Skeleton Loading State -->
+  <div *ngIf="loading" class="card border-0 shadow-sm p-4">
+    <div class="d-flex flex-column gap-3">
+      <div *ngFor="let dummy of [1,2,3,4,5]" class="d-flex align-items-center justify-content-between gap-3">
+        <ion-skeleton-text animated style="width: 50px; height: 50px; border-radius: 8px;"></ion-skeleton-text>
+        <ion-skeleton-text animated style="width: 35%; height: 24px;"></ion-skeleton-text>
+        <ion-skeleton-text animated style="width: 15%; height: 20px;"></ion-skeleton-text>
+        <ion-skeleton-text animated style="width: 15%; height: 20px;"></ion-skeleton-text>
+        <ion-skeleton-text animated style="width: 100px; height: 32px;"></ion-skeleton-text>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Table Utama -->
+  <div *ngIf="!loading" class="card border-0 shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 50px;">#</th>
+            <th style="width: 80px;">Sampul</th>
+            <th>Judul Berita & Slug</th>
+            <th style="width: 160px;">Kategori</th>
+            <th>Ringkasan Excerpt</th>
+            <th style="width: 120px;" class="text-center">Status</th>
+            <th style="width: 140px;">Tanggal</th>
+            <th style="width: 150px;" class="text-end">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="paginatedNews.length === 0">
+            <td colspan="8" class="text-center py-5 text-muted">
+              <i class="far fa-newspaper fa-3x mb-3 text-secondary opacity-50 d-block"></i>
+              <span>Belum ada data berita yang ditemukan.</span>
+            </td>
+          </tr>
+
+          <tr *ngFor="let item of paginatedNews; let i = index">
+            <td class="fw-semibold text-muted">
+              {{ (currentPage - 1) * pageSize + i + 1 }}
+            </td>
+
+            <!-- Sampul Thumbnail -->
+            <td>
+              <div class="news-thumbnail-box">
+                <img
+                  [src]="getImageUrl(item.image)"
+                  [alt]="item.title"
+                  class="news-thumbnail-img"
+                  (error)="handleImageError($event)"
+                />
+              </div>
+            </td>
+
+            <!-- Judul & Slug -->
+            <td>
+              <div class="fw-bold text-dark">{{ item.title }}</div>
+              <small class="text-muted font-monospace">/{{ item.slug }}</small>
+            </td>
+
+            <!-- Kategori -->
+            <td>
+              <span class="badge bg-info text-dark px-2 py-1">
+                {{ item.category?.name || 'Uncategorized' }}
+              </span>
+            </td>
+
+            <!-- Excerpt -->
+            <td>
+              <span class="text-muted small">
+                {{ getExcerpt(item.content) }}
+              </span>
+            </td>
+
+            <!-- Status Switch Toggle -->
+            <td class="text-center">
+              <button
+                type="button"
+                class="btn btn-sm px-2 py-1 fw-bold rounded-pill"
+                [class.btn-success]="item.is_published"
+                [class.btn-outline-secondary]="!item.is_published"
+                (click)="toggleStatus(item, $event)"
+                [title]="item.is_published ? 'Klik untuk ubah ke Draft' : 'Klik untuk Publikasikan'"
+              >
+                <i class="fas" [class.fa-check-circle]="item.is_published" [class.fa-eye-slash]="!item.is_published"></i>
+                {{ item.is_published ? 'Published' : 'Draft' }}
+              </button>
+            </td>
+
+            <!-- Tanggal -->
+            <td>
+              <small class="text-muted">
+                {{ (item.createdAt || item.created_at) ? ((item.createdAt || item.created_at) | date:'dd MMM yyyy') : '-' }}
+              </small>
+            </td>
+
+            <!-- Aksi Buttons -->
+            <td class="text-end">
+              <div class="btn-group btn-group-sm">
+                <button
+                  type="button"
+                  class="btn btn-outline-info"
+                  title="Preview Berita"
+                  (click)="openPreviewModal(item)"
+                >
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-primary"
+                  title="Edit Berita"
+                  (click)="openEditModal(item)"
+                >
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-danger"
+                  title="Hapus Berita"
+                  (click)="confirmDelete(item)"
+                >
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="card-footer bg-white border-top py-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <small class="text-muted">
+        Menampilkan <strong>{{ paginatedNews.length }}</strong> dari total <strong>{{ filteredNews.length }}</strong> berita
+      </small>
+
+      <ul class="pagination pagination-sm mb-0">
+        <li class="page-item" [class.disabled]="currentPage === 1">
+          <button class="page-link" (click)="goToPage(currentPage - 1)">Previous</button>
+        </li>
+        <li
+          *ngFor="let page of [].constructor(totalPages); let p = index"
+          class="page-item"
+          [class.active]="currentPage === (p + 1)"
+        >
+          <button class="page-link" (click)="goToPage(p + 1)">{{ p + 1 }}</button>
+        </li>
+        <li class="page-item" [class.disabled]="currentPage === totalPages">
+          <button class="page-link" (click)="goToPage(currentPage + 1)">Next</button>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Form Modal Create / Edit -->
+  <ion-modal [isOpen]="isModalOpen" (didDismiss)="closeModal()" class="modal-large-custom">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar color="primary">
+          <ion-title>{{ isEditing ? 'Edit Berita' : 'Tambah Berita Baru' }}</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeModal()">Batal</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding">
+        <form [formGroup]="newsForm" (ngSubmit)="saveNews()">
+          <div class="row g-3">
+
+            <!-- Judul Berita -->
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">Judul Berita <span class="text-danger">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                formControlName="title"
+                placeholder="Masukkan judul berita utama..."
+                (input)="onTitleInput()"
+                [class.is-invalid]="newsForm.get('title')?.touched && newsForm.get('title')?.invalid"
+              />
+              <div class="invalid-feedback">
+                Judul berita wajib diisi (minimal 3 karakter).
+              </div>
+            </div>
+
+            <!-- Kategori -->
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Kategori <span class="text-danger">*</span></label>
+              <select
+                class="form-select"
+                formControlName="category_id"
+                [class.is-invalid]="newsForm.get('category_id')?.touched && newsForm.get('category_id')?.invalid"
+              >
+                <option [ngValue]="null" disabled>-- Pilih Kategori --</option>
+                <option *ngFor="let cat of newsCategories" [value]="cat.id">
+                  {{ cat.name }}
+                </option>
+              </select>
+              <div class="invalid-feedback">
+                Kategori berita wajib dipilih.
+              </div>
+            </div>
+
+            <!-- Slug -->
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">Slug URL (SEO)</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light">/berita/</span>
+                <input
+                  type="text"
+                  class="form-control"
+                  formControlName="slug"
+                  placeholder="slug-url-berita-otomatis"
+                />
+              </div>
+              <small class="text-muted">Auto-generated dari judul. Gambar yang diupload akan otomatis dinamai sesuai slug ini.</small>
+            </div>
+
+            <!-- Status Published -->
+            <div class="col-md-4 d-flex align-items-center">
+              <div class="form-check form-switch mt-4">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="statusPublishedSwitch"
+                  formControlName="is_published"
+                />
+                <label class="form-check-label fw-semibold ms-2" for="statusPublishedSwitch">
+                  {{ newsForm.get('is_published')?.value ? 'Status: Published (Terbit)' : 'Status: Draft' }}
+                </label>
+              </div>
+            </div>
+
+            <!-- Upload Cover / Featured Image -->
+            <div class="col-12">
+              <label class="form-label fw-semibold">Gambar Sampul Utama (Featured Cover)</label>
+              <div class="card p-3 border-dashed bg-light">
+                <div class="row align-items-center g-3">
+                  <div class="col-auto">
+                    <div class="featured-preview-box">
+                      <img
+                        [src]="getImageUrl(newsForm.get('image')?.value)"
+                        alt="Preview Cover"
+                        class="featured-preview-img"
+                        (error)="handleImageError($event)"
+                      />
+                    </div>
+                  </div>
+                  <div class="col">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      class="form-control mb-2"
+                      (change)="onFeaturedFileSelected($event)"
+                      [disabled]="uploadingImage"
+                    />
+                    <small class="text-muted d-block">
+                      File akan otomatis di-rename menjadi <code>slug#1.jpg/png</code> di folder backend storage.
+                    </small>
+                    <div *ngIf="uploadingImage" class="text-primary mt-1 small">
+                      <i class="fas fa-spinner fa-spin me-1"></i> Mengunggah gambar sampul...
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Rich Text Content Editor -->
+            <div class="col-12">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <label class="form-label fw-semibold mb-0">Isi Berita Lengkap (Rich Text) <span class="text-danger">*</span></label>
+                <button type="button" class="btn btn-sm btn-outline-info" (click)="openFormPreview()">
+                  <i class="fas fa-eye me-1"></i> Preview Tampilan
+                </button>
+              </div>
+
+              <div class="quill-wrapper" [class.is-invalid]="newsForm.get('content')?.touched && newsForm.get('content')?.invalid">
+                <quill-editor
+                  #quillEditor
+                  formControlName="content"
+                  [modules]="quillModules"
+                  placeholder="Tuliskan isi berita di sini... Anda bisa menyisipkan gambar, heading, list, atau link..."
+                  style="min-height: 250px; display: block;"
+                ></quill-editor>
+              </div>
+              <small class="text-muted d-block mt-1">
+                <i class="fas fa-info-circle me-1"></i> Klik icon gambar di toolbar editor untuk mengunggah gambar inline. Foto inline otomatis dinamai <code>slug#count.ext</code>.
+              </small>
+            </div>
+
+          </div>
+
+          <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+            <button type="button" class="btn btn-light" (click)="closeModal()">Batal</button>
+            <button type="button" class="btn btn-outline-info" (click)="openFormPreview()">
+              <i class="fas fa-eye me-1"></i> Preview
+            </button>
+            <button type="submit" class="btn btn-primary px-4" [disabled]="submitting">
+              <i *ngIf="submitting" class="fas fa-spinner fa-spin me-2"></i>
+              <span>{{ submitting ? 'Menyimpan...' : (isEditing ? 'Perbarui Berita' : 'Simpan Berita') }}</span>
+            </button>
+          </div>
+        </form>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Live Article Preview Modal -->
+  <ion-modal [isOpen]="isPreviewOpen" (didDismiss)="closePreviewModal()" class="modal-large-custom">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar color="dark">
+          <ion-title>Preview Tampilan Berita</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closePreviewModal()">Tutup</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding bg-light">
+        <div class="container py-3" style="max-width: 800px;">
+          <div class="card border-0 shadow">
+            <!-- Cover Header Image -->
+            <div class="article-preview-cover-box">
+              <img
+                [src]="getImageUrl(previewNewsItem?.image)"
+                [alt]="previewNewsItem?.title"
+                class="article-preview-cover-img"
+                (error)="handleImageError($event)"
+              />
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+              <!-- Meta Badges -->
+              <div class="d-flex align-items-center gap-2 mb-3">
+                <span class="badge bg-info text-dark px-3 py-2 fs-6">
+                  {{ previewNewsItem?.category?.name || 'Kategori Berita' }}
+                </span>
+                <span
+                  class="badge px-3 py-2 fs-6"
+                  [class.bg-success]="previewNewsItem?.is_published"
+                  [class.bg-secondary]="!previewNewsItem?.is_published"
+                >
+                  {{ previewNewsItem?.is_published ? 'Published' : 'Draft' }}
+                </span>
+                <small class="text-muted ms-auto">
+                  <i class="far fa-calendar-alt me-1"></i>
+                  {{ (previewNewsItem?.createdAt || previewNewsItem?.created_at) ? ((previewNewsItem?.createdAt || previewNewsItem?.created_at) | date:'dd MMMM yyyy') : 'Hari ini' }}
+                </small>
+              </div>
+
+              <!-- Article Title -->
+              <h1 class="fw-bold text-dark mb-4 display-6">
+                {{ previewNewsItem?.title }}
+              </h1>
+
+              <hr class="mb-4" />
+
+              <!-- Article Rich Content -->
+              <div
+                class="article-content-body lead-normal text-secondary"
+                [innerHTML]="getSanitizedHtml(previewNewsItem?.content)"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+</div>

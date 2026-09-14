@@ -1,5 +1,56 @@
+const fs = require('fs');
+const path = require('path');
 const { News, Category } = require('../models');
 const createSlug = require('../utils/slugify');
+
+const uploadsDir = path.join(__dirname, '../../uploads');
+
+/**
+ * Sanitasi HTML dasar di sisi backend untuk mencegah XSS script injection
+ */
+function sanitizeHtmlContent(html) {
+  if (!html) return '';
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/\s*on\w+\s*=\s*(["'])[\s\S]*?\1/gi, '')
+    .replace(/\s*on\w+\s*=\s*[^>\s]+/gi, '')
+    .replace(/href\s*=\s*(["'])javascript:[\s\S]*?\1/gi, 'href="#"');
+}
+
+/**
+ * Menghapus file fisik dari folder /uploads jika ada
+ */
+function deleteLocalFile(fileRelativeUrl) {
+  if (!fileRelativeUrl || typeof fileRelativeUrl !== 'string') return;
+  if (!fileRelativeUrl.startsWith('/uploads/')) return;
+
+  const filename = path.basename(fileRelativeUrl);
+  const absolutePath = path.join(uploadsDir, filename);
+
+  try {
+    if (fs.existsSync(absolutePath)) {
+      fs.unlinkSync(absolutePath);
+    }
+  } catch (err) {
+    console.error(`Gagal menghapus file gambar fisik ${absolutePath}:`, err.message);
+  }
+}
+
+/**
+ * Mengekstrak semua URL gambar /uploads/ dari string HTML content
+ */
+function extractUploadImageUrls(htmlContent) {
+  if (!htmlContent) return [];
+  const urls = [];
+  const imgRegex = /<img[^>]+src=["'](\/uploads\/[^"']+)["']/gi;
+  let match;
+  while ((match = imgRegex.exec(htmlContent)) !== null) {
+    if (match[1]) {
+      urls.push(match[1]);
+    }
+  }
+  return urls;
+}
 
 // GET /api/news
 exports.getAll = async (req, res) => {
@@ -53,7 +104,6 @@ exports.create = async (req, res) => {
   try {
     const { category_id, title, slug, content, image, is_published } = req.body;
 
-    // Validasi input wajib
     if (!category_id) {
       return res.status(400).json({ success: false, message: 'Kategori wajib dipilih (category_id)' });
     }
@@ -64,7 +114,6 @@ exports.create = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Konten berita wajib diisi' });
     }
 
-    // Pastikan kategori ada
     const category = await Category.findByPk(category_id);
     if (!category) {
       return res.status(400).json({ success: false, message: 'Kategori tidak ditemukan' });
@@ -76,11 +125,13 @@ exports.create = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Slug berita sudah digunakan' });
     }
 
+    const sanitizedContent = sanitizeHtmlContent(content.trim());
+
     const newsItem = await News.create({
       category_id: Number(category_id),
       title: title.trim(),
       slug: generatedSlug,
-      content: content.trim(),
+      content: sanitizedContent,
       image: image || null,
       is_published: is_published !== undefined ? Boolean(is_published) : true,
     });
@@ -120,7 +171,7 @@ exports.update = async (req, res) => {
       if (!content || content.trim() === '') {
         return res.status(400).json({ success: false, message: 'Konten berita tidak boleh kosong' });
       }
-      newsItem.content = content.trim();
+      newsItem.content = sanitizeHtmlContent(content.trim());
     }
 
     if (slug !== undefined || title !== undefined) {
@@ -152,8 +203,20 @@ exports.delete = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Berita tidak ditemukan' });
     }
 
+    // 1. Hapus gambar sampul utama dari storage jika ada
+    if (newsItem.image) {
+      deleteLocalFile(newsItem.image);
+    }
+
+    // 2. Hapus semua gambar inline yang disisipkan di dalam HTML content
+    const inlineImageUrls = extractUploadImageUrls(newsItem.content);
+    inlineImageUrls.forEach((imgUrl) => {
+      deleteLocalFile(imgUrl);
+    });
+
+    // 3. Hapus record dari database
     await newsItem.destroy();
-    return res.status(200).json({ success: true, message: 'Berita berhasil dihapus' });
+    return res.status(200).json({ success: true, message: 'Berita dan file gambar terkait berhasil dihapus' });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Gagal menghapus berita', error: error.message });
   }
