@@ -40,14 +40,11 @@
   text-decoration: none;
   letter-spacing: 0.02em;
 
-  .brand-pill {
-    background: #2563eb;
-    color: #ffffff;
-    font-size: 0.7rem;
-    font-weight: 800;
-    padding: 3px 7px;
+  .brand-logo {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
     border-radius: 6px;
-    letter-spacing: 0.05em;
   }
 
   .brand-title {
