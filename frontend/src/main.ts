@@ -1,4 +1,5 @@
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import { inject } from '@vercel/analytics';
 import { addIcons } from 'ionicons';
 import {
   addOutline,
@@ -45,6 +46,8 @@ addIcons({
   searchOutline,
   trashOutline,
 });
+
+inject();
 
 platformBrowserDynamic().bootstrapModule(AppModule)
   .catch(err => console.log(err));
