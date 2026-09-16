@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const outputPath = resolve(projectRoot, 'src/environments/environment.generated.ts');
-const configuredApiUrl = process.env.VITE_API_URL || 'http://localhost:5000';
+const configuredApiUrl = process.env.VITE_API_URL || 'http://localhost:3000';
 const apiUrl = configuredApiUrl.replace(/\/$/, '').endsWith('/api')
   ? configuredApiUrl.replace(/\/$/, '')
   : `${configuredApiUrl.replace(/\/$/, '')}/api`;

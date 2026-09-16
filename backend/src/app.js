@@ -9,6 +9,7 @@ const allowedOrigins = new Set([
   'https://cms-noorabeauty.vercel.app',
   'http://localhost:5173',
   'http://localhost:3000',
+  'http://localhost:4200',
 ]);
 
 app.use(cors({
