@@ -1,6 +1,8 @@
+import { apiUrl, assetUrl } from './environment.generated';
+
 export const environment = {
   production: true,
-  apiUrl: '/api',
-  assetUrl: 'http://localhost:3000',
+  apiUrl,
+  assetUrl,
   hmacSecret: 'change-this-client-secret'
 };
