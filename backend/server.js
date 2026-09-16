@@ -6,13 +6,17 @@ require('./src/models');
 
 const port = process.env.PORT || 3000;
 
-sequelize.authenticate()
-  .then(() => {
-    app.listen(port, () => {
-      console.log(`CMS Company backend listening on port ${port}`);
+if (require.main === module) {
+  sequelize.authenticate()
+    .then(() => {
+      app.listen(port, () => {
+        console.log(`CMS Company backend listening on port ${port}`);
+      });
+    })
+    .catch((error) => {
+      console.error('Database connection failed:', error.message);
+      process.exitCode = 1;
     });
-  })
-  .catch((error) => {
-    console.error('Database connection failed:', error.message);
-    process.exitCode = 1;
-  });
+}
+
+module.exports = app;
