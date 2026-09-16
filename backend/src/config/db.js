@@ -1,6 +1,8 @@
 require('dotenv').config();
 const { Sequelize } = require('sequelize');
 
+const sslEnabled = process.env.DB_SSL === 'true';
+
 const sequelize = new Sequelize(
 	process.env.DB_NAME || 'db_pt_gibran',
 	process.env.DB_USER || 'root',
@@ -12,6 +14,13 @@ const sequelize = new Sequelize(
 		logging: false,
 		dialectOptions: {
 			multipleStatements: false,
+			...(sslEnabled
+				? {
+					ssl: {
+						rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false',
+					},
+				}
+				: {}),
 		},
 		define: {
 			timestamps: true,
@@ -20,4 +29,4 @@ const sequelize = new Sequelize(
 	},
 );
 
-module.exports = sequelize;
+module.exports = sequelize;
