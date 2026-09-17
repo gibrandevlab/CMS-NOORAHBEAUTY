@@ -1,4 +1,5 @@
 require('dotenv').config();
+const mysql2 = require("mysql2");
 const { Sequelize } = require('sequelize');
 
 const sslEnabled = process.env.DB_SSL === 'true';
@@ -11,6 +12,7 @@ const sequelize = new Sequelize(
 		host: process.env.DB_HOST || '127.0.0.1',
 		port: Number(process.env.DB_PORT || 3306),
 		dialect: 'mysql',
+		dialectModule: mysql2,
 		logging: false,
 		dialectOptions: {
 			multipleStatements: false,
