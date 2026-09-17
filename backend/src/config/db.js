@@ -1,4 +1,5 @@
 require('dotenv').config();
+const mysql2 = require("mysql2");
 const { Sequelize } = require('sequelize');
 
 const sslEnabled = process.env.DB_SSL === 'true';
