@@ -5,18 +5,30 @@ const routes = require("./routes");
 
 const app = express();
 
-// Masukkan array domain langsung
 const allowedOrigins = [
   "https://noorahbeauty.biz.id",
   "https://www.noorahbeauty.biz.id",
   "https://cms-noorabeauty.vercel.app",
+  "https://cms-noorahbeauty.vercel.app",
   "http://localhost:8100",
   "http://localhost:3000",
 ];
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+      if (!origin) return callback(null, true);
+
+      if (
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(".vercel.app") ||
+        (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL)
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     credentials: true,
   }),
 );
