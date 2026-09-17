@@ -97,7 +97,7 @@ export class CategoryService {
    * Mengubah data kategori
    */
   updateCategory(id: number, dto: UpdateCategoryDto): Observable<CategoryResponse> {
-    return this.http.put<CategoryResponse>(`${this.publicApiUrl}/${id}`, dto).pipe(
+    return this.http.put<CategoryResponse>(`${this.adminApiUrl}/${id}`, dto).pipe(
       tap((response) => {
         if (response?.success && response.data) {
           const updatedList = this.cachedCategories.map((item) =>
@@ -113,7 +113,7 @@ export class CategoryService {
    * Menghapus kategori
    */
   deleteCategory(id: number): Observable<{ success: boolean; message?: string }> {
-    return this.http.delete<{ success: boolean; message?: string }>(`${this.publicApiUrl}/${id}`).pipe(
+    return this.http.delete<{ success: boolean; message?: string }>(`${this.adminApiUrl}/${id}`).pipe(
       tap((response) => {
         if (response?.success) {
           const updatedList = this.cachedCategories.filter((item) => item.id !== id);
