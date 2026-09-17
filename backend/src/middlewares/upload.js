@@ -5,13 +5,17 @@ const imagekit = require('../utils/imagekit');
 
 // Local uploads directory (public/uploads)
 const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads');
-if (!fs.existsSync(publicUploadsDir)) {
-  fs.mkdirSync(publicUploadsDir, { recursive: true });
-}
 
 // 1. Storage Engines
 const diskStorage = multer.diskStorage({
   destination: (req, file, cb) => {
+    try {
+      if (!fs.existsSync(publicUploadsDir)) {
+        fs.mkdirSync(publicUploadsDir, { recursive: true });
+      }
+    } catch (e) {
+      // Ignore if filesystem is read-only (e.g. on serverless environments)
+    }
     cb(null, publicUploadsDir);
   },
   filename: (req, file, cb) => {
