@@ -66,7 +66,7 @@ export class JasaPage implements OnInit {
 
   private initForm() {
     this.productForm = this.fb.group({
-      category_id: ['', [Validators.required]],
+      category_id: [null, [Validators.required]],
       name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(150)]],
       slug: ['', [Validators.maxLength(255)]],
       description: [''],
@@ -253,7 +253,7 @@ export class JasaPage implements OnInit {
     this.editingId = null;
     this.imagePreviewUrl = null;
     this.productForm.reset({
-      category_id: this.categories.length > 0 ? this.categories[0].id : '',
+      category_id: this.categories.length > 0 ? this.categories[0].id : null,
       name: '',
       slug: '',
       description: '',

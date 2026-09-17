@@ -252,8 +252,8 @@
             formControlName="category_id"
             [class.is-invalid]="productForm.get('category_id')?.touched && productForm.get('category_id')?.invalid"
           >
-            <option value="" disabled>-- Pilih Kategori --</option>
-            <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
+            <option [ngValue]="null" disabled>-- Pilih Kategori --</option>
+            <option *ngFor="let cat of categories" [ngValue]="cat.id">{{ cat.name }}</option>
           </select>
           <div
             *ngIf="productForm.get('category_id')?.touched && productForm.get('category_id')?.invalid"
