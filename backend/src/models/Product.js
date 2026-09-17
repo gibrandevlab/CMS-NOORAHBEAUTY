@@ -11,6 +11,7 @@ Product.init({
   description: { type: DataTypes.TEXT, allowNull: true },
   price: { type: DataTypes.DECIMAL(15, 2), allowNull: false, defaultValue: 0.00, get() { return Number(this.getDataValue('price')); }, validate: { min: 0 } },
   image: { type: DataTypes.STRING(255), allowNull: true },
+  image_file_id: { type: DataTypes.STRING(255), allowNull: true },
   is_active: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true, get() { return Boolean(this.getDataValue('is_active')); } },
 }, {
   sequelize,

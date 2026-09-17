@@ -1,5 +1,6 @@
 const { Product, Category } = require('../models');
 const createSlug = require('../utils/slugify');
+const { deleteFile } = require('../utils/fileHandler');
 
 // GET /api/products
 exports.getAll = async (req, res) => {
@@ -51,7 +52,7 @@ exports.getByIdOrSlug = async (req, res) => {
 // POST /api/products
 exports.create = async (req, res) => {
   try {
-    const { category_id, name, slug, description, price, image, is_active } = req.body;
+    const { category_id, name, slug, description, price, is_active } = req.body;
 
     // Validasi input wajib
     if (!category_id) {
@@ -78,13 +79,23 @@ exports.create = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Harga produk harus berupa angka tidak negatif' });
     }
 
+    // Resolve Image URL & ImageKit File ID (handles both req.file multipart and req.body string input)
+    let imageUrl = req.body.image || null;
+    let imageFileId = req.body.image_file_id || null;
+
+    if (req.file) {
+      imageUrl = req.file.url || req.file.path;
+      imageFileId = req.file.fileId || null;
+    }
+
     const product = await Product.create({
       category_id: Number(category_id),
       name: name.trim(),
       slug: generatedSlug,
       description: description || null,
       price: numPrice,
-      image: image || null,
+      image: imageUrl,
+      image_file_id: imageFileId,
       is_active: is_active !== undefined ? Boolean(is_active) : true,
     });
 
@@ -102,7 +113,7 @@ exports.update = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Produk tidak ditemukan' });
     }
 
-    const { category_id, name, slug, description, price, image, is_active } = req.body;
+    const { category_id, name, slug, description, price, is_active } = req.body;
 
     if (category_id !== undefined) {
       const category = await Category.findByPk(category_id);
@@ -138,7 +149,28 @@ exports.update = async (req, res) => {
       }
       product.price = numPrice;
     }
-    if (image !== undefined) product.image = image;
+
+    // Handle Image Replacement with Synchronized Deletion
+    let newImageUrl = undefined;
+    let newImageFileId = undefined;
+
+    if (req.file) {
+      newImageUrl = req.file.url || req.file.path;
+      newImageFileId = req.file.fileId || null;
+    } else if (req.body.image !== undefined) {
+      newImageUrl = req.body.image;
+      newImageFileId = req.body.image_file_id !== undefined ? req.body.image_file_id : null;
+    }
+
+    if (newImageUrl !== undefined && newImageUrl !== product.image) {
+      // Safely delete old image file from storage (local or ImageKit) before updating
+      if (product.image) {
+        await deleteFile(product.image, product.image_file_id);
+      }
+      product.image = newImageUrl;
+      product.image_file_id = newImageFileId;
+    }
+
     if (is_active !== undefined) product.is_active = Boolean(is_active);
 
     await product.save();
@@ -156,6 +188,12 @@ exports.delete = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Produk tidak ditemukan' });
     }
 
+    // Synchronized Deletion: Delete file from storage (Local / ImageKit CDN) non-blockingly
+    if (product.image) {
+      await deleteFile(product.image, product.image_file_id);
+    }
+
+    // Delete database record
     await product.destroy();
     return res.status(200).json({ success: true, message: 'Produk berhasil dihapus' });
   } catch (error) {

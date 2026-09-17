@@ -1,9 +1,6 @@
-const fs = require('fs');
-const path = require('path');
 const { News, Category } = require('../models');
 const createSlug = require('../utils/slugify');
-
-const uploadsDir = path.join(__dirname, '../../uploads');
+const { deleteFile } = require('../utils/fileHandler');
 
 /**
  * Sanitasi HTML dasar di sisi backend untuk mencegah XSS script injection
@@ -18,40 +15,7 @@ function sanitizeHtmlContent(html) {
 }
 
 /**
- * Menghapus file fisik dari folder /uploads jika ada
- */
-function deleteLocalFile(fileRelativeUrl) {
-  if (!fileRelativeUrl || typeof fileRelativeUrl !== 'string') return;
-
-  let pathname = fileRelativeUrl;
-  try {
-    pathname = new URL(fileRelativeUrl, 'http://localhost').pathname;
-  } catch {
-    return;
-  }
-
-  if (!pathname.startsWith('/uploads/')) return;
-
-  let filename;
-  try {
-    filename = path.basename(decodeURIComponent(pathname));
-  } catch {
-    return;
-  }
-
-  const absolutePath = path.join(uploadsDir, filename);
-
-  try {
-    if (fs.existsSync(absolutePath)) {
-      fs.unlinkSync(absolutePath);
-    }
-  } catch (err) {
-    console.error(`Gagal menghapus file gambar fisik ${absolutePath}:`, err.message);
-  }
-}
-
-/**
- * Mengekstrak semua URL gambar /uploads/ dari string HTML content
+ * Mengekstrak semua URL gambar (/uploads/ atau CDN) dari string HTML content
  */
 function extractUploadImageUrls(htmlContent) {
   if (!htmlContent) return [];
@@ -59,7 +23,7 @@ function extractUploadImageUrls(htmlContent) {
   const imgRegex = /<img[^>]+src=["']([^"']+)["']/gi;
   let match;
   while ((match = imgRegex.exec(htmlContent)) !== null) {
-    if (match[1] && /(?:^https?:\/\/[^/]+)?\/uploads\//i.test(match[1])) {
+    if (match[1]) {
       urls.push(match[1]);
     }
   }
@@ -116,7 +80,7 @@ exports.getByIdOrSlug = async (req, res) => {
 // POST /api/news
 exports.create = async (req, res) => {
   try {
-    const { category_id, title, slug, content, image, is_published } = req.body;
+    const { category_id, title, slug, content, is_published } = req.body;
 
     if (!category_id) {
       return res.status(400).json({ success: false, message: 'Kategori wajib dipilih (category_id)' });
@@ -141,12 +105,21 @@ exports.create = async (req, res) => {
 
     const sanitizedContent = sanitizeHtmlContent(content.trim());
 
+    let imageUrl = req.body.image || null;
+    let imageFileId = req.body.image_file_id || null;
+
+    if (req.file) {
+      imageUrl = req.file.url || req.file.path;
+      imageFileId = req.file.fileId || null;
+    }
+
     const newsItem = await News.create({
       category_id: Number(category_id),
       title: title.trim(),
       slug: generatedSlug,
       content: sanitizedContent,
-      image: image || null,
+      image: imageUrl,
+      image_file_id: imageFileId,
       is_published: is_published !== undefined ? Boolean(is_published) : true,
     });
 
@@ -164,7 +137,7 @@ exports.update = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Berita tidak ditemukan' });
     }
 
-    const { category_id, title, slug, content, image, is_published } = req.body;
+    const { category_id, title, slug, content, is_published } = req.body;
 
     if (category_id !== undefined) {
       const category = await Category.findByPk(category_id);
@@ -199,7 +172,26 @@ exports.update = async (req, res) => {
       }
     }
 
-    if (image !== undefined) newsItem.image = image;
+    // Handle Cover Image Replacement with Synchronized Deletion
+    let newImageUrl = undefined;
+    let newImageFileId = undefined;
+
+    if (req.file) {
+      newImageUrl = req.file.url || req.file.path;
+      newImageFileId = req.file.fileId || null;
+    } else if (req.body.image !== undefined) {
+      newImageUrl = req.body.image;
+      newImageFileId = req.body.image_file_id !== undefined ? req.body.image_file_id : null;
+    }
+
+    if (newImageUrl !== undefined && newImageUrl !== newsItem.image) {
+      if (newsItem.image) {
+        await deleteFile(newsItem.image, newsItem.image_file_id);
+      }
+      newsItem.image = newImageUrl;
+      newsItem.image_file_id = newImageFileId;
+    }
+
     if (is_published !== undefined) newsItem.is_published = Boolean(is_published);
 
     await newsItem.save();
@@ -219,14 +211,14 @@ exports.delete = async (req, res) => {
 
     // 1. Hapus gambar sampul utama dari storage jika ada
     if (newsItem.image) {
-      deleteLocalFile(newsItem.image);
+      await deleteFile(newsItem.image, newsItem.image_file_id);
     }
 
     // 2. Hapus semua gambar inline yang disisipkan di dalam HTML content
     const inlineImageUrls = extractUploadImageUrls(newsItem.content);
-    inlineImageUrls.forEach((imgUrl) => {
-      deleteLocalFile(imgUrl);
-    });
+    for (const imgUrl of inlineImageUrls) {
+      await deleteFile(imgUrl);
+    }
 
     // 3. Hapus record dari database
     await newsItem.destroy();

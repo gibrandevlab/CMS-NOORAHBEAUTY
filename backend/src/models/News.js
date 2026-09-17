@@ -10,6 +10,7 @@ News.init({
   slug: { type: DataTypes.STRING(255), allowNull: false, unique: true, validate: { notEmpty: true, len: [1, 255] } },
   content: { type: DataTypes.TEXT('long'), allowNull: false, validate: { notEmpty: true } },
   image: { type: DataTypes.STRING(255), allowNull: true },
+  image_file_id: { type: DataTypes.STRING(255), allowNull: true },
   is_published: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true, get() { return Boolean(this.getDataValue('is_published')); } },
 }, {
   sequelize,
