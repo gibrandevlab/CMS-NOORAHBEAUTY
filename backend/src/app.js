@@ -11,6 +11,7 @@ const allowedOrigins = [
   "https://cms-noorabeauty.vercel.app",
   "https://cms-noorahbeauty.vercel.app",
   "http://localhost:8100",
+  "http://localhost:8101",
   "http://localhost:3000",
 ];
 
@@ -42,7 +43,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+app.options(/(.*)/,  cors(corsOptions));
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
