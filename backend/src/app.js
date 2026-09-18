@@ -1,9 +1,14 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+const compression = require("compression");
 const routes = require("./routes");
+const seoController = require("./controllers/seoController");
 
 const app = express();
+
+// Gzip Compression for all text-based API responses & static assets
+app.use(compression());
 
 const allowedOrigins = [
   "https://noorahbeauty.biz.id",
@@ -17,7 +22,6 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps, curl, or server-to-server)
     if (!origin) return callback(null, true);
 
     if (
@@ -43,15 +47,28 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options(/(.*)/,  cors(corsOptions));
+app.options(/(.*)/, cors(corsOptions));
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-// Serve static files from public/uploads and legacy uploads folder
-app.use("/uploads", express.static(path.join(process.cwd(), "public", "uploads")));
-app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+// Serve static files with 1-year immutable cache control headers
+const staticCacheConfig = {
+  maxAge: '1y',
+  immutable: true,
+  setHeaders: (res) => {
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  },
+};
 
+app.use("/uploads", express.static(path.join(process.cwd(), "public", "uploads"), staticCacheConfig));
+app.use("/uploads", express.static(path.join(__dirname, "../uploads"), staticCacheConfig));
+
+// SEO Directives Endpoints (Root Level)
+app.get("/sitemap.xml", seoController.getSitemap);
+app.get("/robots.txt", seoController.getRobots);
+
+// Health Check Endpoint
 app.get("/health", (req, res) => {
   res.json({ status: "ok", message: "CMS Backend Service is Running" });
 });
@@ -59,7 +76,15 @@ app.get("/health", (req, res) => {
 // Mount /api routes
 app.use("/api", routes);
 
-// Central error handler fallback
+// 404 Handler for Unmatched Endpoints (Mencegah Soft-404)
+app.use((req, res, next) => {
+  res.status(404).json({
+    success: false,
+    message: `Endpoint ${req.originalUrl} tidak ditemukan`,
+  });
+});
+
+// Central Error Handler Fallback
 app.use((err, req, res, next) => {
   console.error("Server error:", err);
   res.status(err.status || 500).json({

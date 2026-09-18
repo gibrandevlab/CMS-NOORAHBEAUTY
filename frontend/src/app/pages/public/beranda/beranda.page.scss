@@ -1,68 +1,69 @@
 // ==========================================================================
-// DESIGN TOKENS
-// Sistem warna & tipografi terpusat — ubah di sini, konsisten di semua tempat
+// DESIGN TOKENS (MONOCHROME HIGH-CONTRAST)
+// Sistem warna & tipografi terpusat — Monokrom Hitam & Putih High-Contrast
 // ==========================================================================
 .beranda-page {
-  --bg-base: #121212;
-  --bg-surface: #1a1a1a;
-  --bg-surface-card: #212121;
+  --bg-base: #0a0a0a;
+  --bg-surface: #141414;
+  --bg-surface-card: #1c1c1c;
   --bg-elevated: #262626;
 
-  --rose: #c98a94;        // dinaikkan dari #b76e79 → lebih terang, lebih kontras
-  --rose-dark: #b76e79;
-  --gold: #e8c9a3;        // dinaikkan sedikit brightness-nya untuk keterbacaan judul
-  --rose-gold: #d9a5a5;
+  --rose: #e4e4e7;        // Silver Gray Accent
+  --rose-dark: #ffffff;   // Pure White
+  --gold: #ffffff;        // Crisp High-Contrast White untuk Judul Seksi
+  --rose-gold: #f4f4f5;
 
-  // Teks: 3 tingkat kontras yang jelas & sesuai WCAG AA di atas bg gelap
-  --text-primary: #f5f2f0;    // ~15.5:1 di atas #121212 — judul, isi penting
-  --text-secondary: #c4bdb8;  // ~8.9:1 — body text, deskripsi (BUKAN abu bootstrap default)
-  --text-muted: #b8b0ab;      // metadata dan label kecil tetap terbaca di atas surface gelap
+  // Teks: High Contrast (Sesuai WCAG AAA di atas bg gelap #0a0a0a)
+  --text-primary: #ffffff;    // 21:1 di atas #0a0a0a — Judul, headline, teks utama
+  --text-secondary: #d4d4d8;  // ~12:1 di atas #0a0a0a — Body text, deskripsi terang & sangat mudah dibaca
+  --text-muted: #a1a1aa;      // ~7.5:1 — Metadata & label pendukung
 
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-rose: rgba(201, 138, 148, 0.35);
+  --border-subtle: rgba(255, 255, 255, 0.15);
+  --border-rose: rgba(255, 255, 255, 0.35);
 }
 
 .beranda-page {
   background-color: var(--bg-base);
   color: var(--text-primary);
 
-  // Override utility classes Bootstrap yang kontrasnya buruk di background gelap
   .text-secondary { color: var(--text-secondary) !important; }
   .text-muted { color: var(--text-muted) !important; }
   .text-gold { color: var(--gold) !important; }
   .text-rose { color: var(--rose) !important; }
   .text-light { color: var(--text-primary) !important; }
-  .bg-secondary { background-color: #3a3436 !important; }
+  .bg-secondary { background-color: #262626 !important; }
 
   .badge.text-dark {
-    color: #fff7f5 !important;
+    color: #000000 !important;
+    background-color: #ffffff !important;
   }
 }
 
 // ==========================================================================
-// TIPOGRAFI — hierarki eksplisit: eyebrow < h2 < h1, body dengan line-height cukup
+// TIPOGRAFI
 // ==========================================================================
 .eyebrow-label {
   color: var(--rose);
   font-family: monospace;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   display: block;
   margin-bottom: 0.5rem;
 }
 
 .section-title {
   color: var(--gold);
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1.2;
   margin-bottom: 0;
+  letter-spacing: -0.01em;
 }
 
 .section-lead {
   color: var(--text-secondary) !important;
-  line-height: 1.65; // dinaikkan dari default supaya paragraf panjang tidak padat
+  line-height: 1.65;
   max-width: 620px;
 }
 
@@ -70,12 +71,12 @@
 // HERO SECTION
 // ==========================================================================
 .hero-section {
-  background: radial-gradient(circle at 80% 20%, rgba(201, 138, 148, 0.18) 0%, var(--bg-base) 70%);
+  background: radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.08) 0%, var(--bg-base) 70%);
 }
 
 .bg-dark-glass {
-  background: rgba(38, 38, 38, 0.85);
-  backdrop-filter: blur(8px);
+  background: rgba(26, 26, 26, 0.9);
+  backdrop-filter: blur(10px);
 }
 
 .border-rose {
@@ -83,8 +84,8 @@
 }
 
 .hero-headline {
-  color: var(--text-primary); // headline utama pakai putih terang, BUKAN gold —
-  font-weight: 800;            // gold disimpan untuk section-title supaya headline hero tetap #1 dalam hierarki
+  color: var(--text-primary);
+  font-weight: 800;
   line-height: 1.15;
   margin-bottom: 1rem;
 }
@@ -96,6 +97,7 @@
 .hero-avatar-box {
   aspect-ratio: 1 / 1;
   background-color: var(--bg-surface-card);
+  border: 1px solid var(--border-subtle);
 }
 
 .hero-avatar-img {
@@ -108,52 +110,52 @@
   position: absolute;
   bottom: 20px;
   right: 20px;
-  background: var(--rose-dark);
-  color: #ffffff;
+  background: #ffffff;
+  color: #000000;
   padding: 8px 16px;
   border-radius: 30px;
   font-size: 0.85rem;
-  font-weight: 700;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  font-weight: 800;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
 }
 
-// CTA hierarchy: primary (rose-gold solid) vs secondary (outline) — kontras aksi jelas
+// CTA buttons: Monokrom High-Contrast
 .btn-rose-gold {
-  background: linear-gradient(135deg, var(--rose) 0%, var(--rose-dark) 100%);
-  color: #1a1010;
-  font-weight: 700;
+  background: linear-gradient(135deg, #ffffff 0%, #e4e4e7 100%);
+  color: #000000 !important;
+  font-weight: 800;
   border: none;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(201, 138, 148, 0.35);
-    color: #1a1010;
+    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.35);
+    color: #000000 !important;
   }
 }
 
 .btn-outline-light {
-  border: 1.5px solid rgba(245, 242, 240, 0.4);
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
   color: var(--text-primary);
   font-weight: 600;
 
   &:hover {
-    background: rgba(245, 242, 240, 0.08);
-    border-color: var(--text-primary);
-    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: #ffffff;
+    color: #ffffff;
   }
 }
 
 .btn-outline-rose {
-  border: 1.5px solid var(--rose);
-  color: var(--rose);
-  font-weight: 600;
+  border: 1.5px solid #ffffff;
+  color: #ffffff;
+  font-weight: 700;
 
   &:hover {
-    background: var(--rose);
-    color: #1a1010;
+    background: #ffffff;
+    color: #000000 !important;
   }
 }
 
@@ -172,23 +174,22 @@
 
   &:hover {
     background: var(--bg-elevated);
-    border-color: var(--rose);
+    border-color: #ffffff;
     transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(255, 255, 255, 0.08);
 
     .highlight-icon-box {
-      color: var(--gold) !important;
+      color: #ffffff !important;
     }
   }
 }
 
 .highlight-title {
-  color: var(--text-primary) !important; // sebelumnya text-light Bootstrap kurang kontras dgn font-weight rendah
+  color: var(--text-primary) !important;
 }
 
 // ==========================================================================
 // PORTFOLIO GRID
-// PERBAIKAN UTAMA: overlay & judul selalu terlihat di mobile (tanpa hover),
-// hover di desktop hanya menguatkan efek — bukan syarat untuk membaca info
 // ==========================================================================
 .portfolio-grid-card {
   aspect-ratio: 1 / 1;
@@ -209,13 +210,11 @@
 .portfolio-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(18, 18, 18, 0) 35%, rgba(18, 18, 18, 0.96) 100%);
-  // dulu: opacity: 0, hanya muncul on hover → tidak bisa dibaca di mobile.
-  // sekarang: selalu terlihat sebagian, menguat saat hover di desktop
+  background: linear-gradient(180deg, rgba(10, 10, 10, 0) 35%, rgba(10, 10, 10, 0.96) 100%);
   opacity: 1;
 
   h5, small {
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); // jaga keterbacaan di atas foto terang
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
   }
 
   small.text-secondary {
@@ -224,7 +223,7 @@
 }
 
 .portfolio-grid-card:hover .portfolio-overlay {
-  background: linear-gradient(180deg, rgba(18, 18, 18, 0.15) 20%, rgba(18, 18, 18, 0.97) 100%);
+  background: linear-gradient(180deg, rgba(10, 10, 10, 0.2) 20%, rgba(10, 10, 10, 0.98) 100%);
 }
 
 // ==========================================================================
@@ -252,20 +251,18 @@
   transform: scale(1.05);
 }
 
-// Badge kategori dibedakan dari tombol CTA: solid gelap + teks rose, bukan rose-gold solid
-// supaya tidak bersaing visual dengan tombol "Pesan"
 .product-badge {
   position: absolute;
   top: 12px;
   left: 12px;
   padding: 6px 12px;
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  background: rgba(18, 18, 18, 0.85) !important;
-  color: var(--rose) !important;
-  border: 1px solid var(--border-rose);
+  letter-spacing: 0.04em;
+  background: rgba(0, 0, 0, 0.9) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.35);
   backdrop-filter: blur(4px);
 }
 
@@ -282,13 +279,14 @@
 }
 
 .article-category {
-  background-color: #3a3436 !important;
+  background-color: #262626 !important;
   color: var(--text-primary) !important;
+  border: 1px solid var(--border-subtle);
 }
 
 .product-price {
-  color: var(--gold);
-  font-weight: 700;
+  color: #ffffff;
+  font-weight: 800;
 }
 
 // ==========================================================================
@@ -327,20 +325,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--bg-base) !important;
+  background-color: var(--bg-surface) !important;
   border: 1px solid var(--border-subtle) !important;
 }
 
 .vendor-logo-img {
   max-height: 44px;
   object-fit: contain;
-  // logo vendor biasanya transparan PNG dgn warna gelap — beri sedikit brightness
-  // supaya tidak "hilang" di background gelap
-  filter: brightness(1.1) contrast(1.05);
+  filter: brightness(1.2) contrast(1.1);
 }
 
 // ==========================================================================
-// RESPONSIVE — perkecil skala tipografi supaya hierarki tetap terjaga di mobile
+// RESPONSIVE
 // ==========================================================================
 @media (max-width: 767.98px) {
   .hero-headline { font-size: 2rem; }

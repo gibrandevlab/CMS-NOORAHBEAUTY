@@ -5,6 +5,7 @@ import { environment } from '../../../../environments/environment';
 import { Category } from '../../../models/category.model';
 import { Product } from '../../../models/product.model';
 import { PublicService } from '../../../services/public.service';
+import { SeoService } from '../../../services/seo.service';
 
 @Component({
   selector: 'app-public-katalog-jasa',
@@ -14,6 +15,7 @@ import { PublicService } from '../../../services/public.service';
 })
 export class KatalogJasaPage implements OnInit, ViewWillEnter {
   private readonly publicService = inject(PublicService);
+  private readonly seoService = inject(SeoService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -36,6 +38,7 @@ export class KatalogJasaPage implements OnInit, ViewWillEnter {
   isDetailOpen = false;
 
   ngOnInit() {
+    this.setDefaultSeo();
     this.loadCategories();
     this.loadProducts();
 
@@ -48,8 +51,22 @@ export class KatalogJasaPage implements OnInit, ViewWillEnter {
   }
 
   ionViewWillEnter() {
+    this.setDefaultSeo();
     this.loadCategories();
     this.loadProducts();
+  }
+
+  private setDefaultSeo() {
+    this.seoService.updateTags({
+      title: 'Katalog Jasa & Press-on Nails - Noorah Beauty MUA',
+      description:
+        'Katalog lengkap layanan Makeup Artist (Wedding, Graduation, Photoshoot, Event) & Custom Press-on Nails Semarang.',
+      type: 'website',
+    });
+    this.seoService.setBreadcrumbSchema([
+      { name: 'Beranda', url: '/beranda' },
+      { name: 'Katalog Jasa & Nails', url: '/katalog-jasa' },
+    ]);
   }
 
   loadCategories() {
@@ -91,8 +108,57 @@ export class KatalogJasaPage implements OnInit, ViewWillEnter {
         if (res?.success && res.data) {
           this.selectedProduct = res.data;
           this.isDetailOpen = true;
+          this.updateProductSeo(res.data);
           this.cdr.markForCheck();
         }
+      },
+    });
+  }
+
+  openProductDetail(product: Product) {
+    this.selectedProduct = product;
+    this.isDetailOpen = true;
+    this.updateProductSeo(product);
+    this.cdr.markForCheck();
+  }
+
+  closeDetailModal() {
+    this.isDetailOpen = false;
+    this.selectedProduct = null;
+    this.setDefaultSeo();
+    this.cdr.markForCheck();
+  }
+
+  private updateProductSeo(product: Product) {
+    const priceText = this.formatPrice(product.price);
+    const description =
+      product.description || `Layanan ${product.name} dari Noorah Beauty MUA Semarang (${priceText}).`;
+    const imageUrl = this.getImageUrl(product.image);
+
+    this.seoService.updateTags({
+      title: `${product.name} - ${priceText}`,
+      description: description,
+      image: imageUrl,
+      type: 'product',
+    });
+
+    this.seoService.setBreadcrumbSchema([
+      { name: 'Beranda', url: '/beranda' },
+      { name: 'Katalog Jasa & Nails', url: '/katalog-jasa' },
+      { name: product.name, url: `/katalog-jasa/${product.slug || product.id}` },
+    ]);
+
+    this.seoService.setJsonLdSchema({
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: product.name,
+      description: description,
+      image: [imageUrl],
+      offers: {
+        '@type': 'Offer',
+        priceCurrency: 'IDR',
+        price: product.price || 0,
+        availability: 'https://schema.org/InStock',
       },
     });
   }
@@ -146,18 +212,6 @@ export class KatalogJasaPage implements OnInit, ViewWillEnter {
 
   onSearchChange() {
     this.currentPage = 1;
-    this.cdr.markForCheck();
-  }
-
-  openProductDetail(product: Product) {
-    this.selectedProduct = product;
-    this.isDetailOpen = true;
-    this.cdr.markForCheck();
-  }
-
-  closeDetailModal() {
-    this.isDetailOpen = false;
-    this.selectedProduct = null;
     this.cdr.markForCheck();
   }
 

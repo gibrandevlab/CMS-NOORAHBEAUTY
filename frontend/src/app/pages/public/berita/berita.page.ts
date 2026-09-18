@@ -6,6 +6,7 @@ import { environment } from '../../../../environments/environment';
 import { Category } from '../../../models/category.model';
 import { News } from '../../../models/news.model';
 import { PublicService } from '../../../services/public.service';
+import { SeoService } from '../../../services/seo.service';
 
 @Component({
   selector: 'app-public-berita',
@@ -15,6 +16,7 @@ import { PublicService } from '../../../services/public.service';
 })
 export class BeritaPage implements OnInit, ViewWillEnter {
   private readonly publicService = inject(PublicService);
+  private readonly seoService = inject(SeoService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly sanitizer = inject(DomSanitizer);
@@ -47,6 +49,16 @@ export class BeritaPage implements OnInit, ViewWillEnter {
       } else {
         this.isDetailMode = false;
         this.selectedArticle = null;
+        this.seoService.updateTags({
+          title: 'Berita & Beauty Tips - Noorah Beauty MUA',
+          description:
+            'Artikel kecantikan, tips makeup, tren hairdo, dan informasi terbaru dari Noorah Beauty MUA Semarang.',
+          type: 'website',
+        });
+        this.seoService.setBreadcrumbSchema([
+          { name: 'Beranda', url: '/beranda' },
+          { name: 'Tips & Portofolio', url: '/berita' },
+        ]);
         this.cdr.markForCheck();
       }
     });
@@ -97,6 +109,36 @@ export class BeritaPage implements OnInit, ViewWillEnter {
         if (res?.success && res.data) {
           this.selectedArticle = res.data;
           this.isDetailMode = true;
+
+          // Dynamic Meta Tags & Structured Data untuk Detail Artikel
+          const excerpt = this.getExcerpt(res.data.content, 150);
+          const imageUrl = this.getImageUrl(res.data.image);
+
+          this.seoService.updateTags({
+            title: res.data.title,
+            description: excerpt,
+            image: imageUrl,
+            type: 'article',
+          });
+
+          this.seoService.setBreadcrumbSchema([
+            { name: 'Beranda', url: '/beranda' },
+            { name: 'Tips & Portofolio', url: '/berita' },
+            { name: res.data.title, url: `/berita/${res.data.slug}` },
+          ]);
+
+          this.seoService.setJsonLdSchema({
+            '@context': 'https://schema.org',
+            '@type': 'Article',
+            headline: res.data.title,
+            description: excerpt,
+            image: [imageUrl],
+            datePublished: res.data.createdAt || res.data.created_at,
+            author: {
+              '@type': 'Organization',
+              name: 'Noorah Beauty MUA',
+            },
+          });
         }
         this.loading = false;
         this.cdr.markForCheck();

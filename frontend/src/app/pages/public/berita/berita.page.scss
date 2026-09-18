@@ -1,23 +1,23 @@
 // ==========================================================================
-// DESIGN TOKENS (Disamakan dengan Beranda)
+// DESIGN TOKENS (MONOCHROME HIGH-CONTRAST)
 // ==========================================================================
 .berita-page {
-  --bg-base: #121212;
-  --bg-surface: #1a1a1a;
-  --bg-surface-card: #212121;
+  --bg-base: #0a0a0a;
+  --bg-surface: #141414;
+  --bg-surface-card: #1c1c1c;
   --bg-elevated: #262626;
 
-  --rose: #c98a94;
-  --rose-dark: #b76e79;
-  --gold: #e8c9a3;
-  --rose-gold: #d9a5a5;
+  --rose: #e4e4e7;
+  --rose-dark: #ffffff;
+  --gold: #ffffff;
+  --rose-gold: #f4f4f5;
 
-  --text-primary: #f5f2f0;
-  --text-secondary: #c4bdb8;
-  --text-muted: #b8b0ab;
+  --text-primary: #ffffff;
+  --text-secondary: #d4d4d8;
+  --text-muted: #a1a1aa;
 
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-rose: rgba(201, 138, 148, 0.35);
+  --border-subtle: rgba(255, 255, 255, 0.15);
+  --border-rose: rgba(255, 255, 255, 0.35);
 }
 
 .berita-page {
@@ -32,7 +32,8 @@
   .text-light { color: var(--text-primary) !important; }
 
   .badge.text-dark {
-    color: #1a1010 !important;
+    color: #000000 !important;
+    background-color: #ffffff !important;
   }
 }
 
@@ -43,15 +44,15 @@
   color: var(--rose);
   font-family: monospace;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   display: block;
 }
 
 .section-title {
   color: var(--gold);
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1.2;
 }
 
@@ -64,39 +65,39 @@
 // TOMBOL CTA & FILTER PILLS
 // ==========================================================================
 .btn-rose-gold {
-  background: linear-gradient(135deg, var(--rose) 0%, var(--rose-dark) 100%);
-  color: #1a1010 !important;
-  font-weight: 700;
+  background: linear-gradient(135deg, #ffffff 0%, #e4e4e7 100%);
+  color: #000000 !important;
+  font-weight: 800;
   border: none;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(201, 138, 148, 0.35);
-    color: #1a1010 !important;
+    box-shadow: 0 6px 18px rgba(255, 255, 255, 0.35);
+    color: #000000 !important;
   }
 }
 
 .btn-outline-light {
-  border: 1.5px solid rgba(245, 242, 240, 0.4);
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
   color: var(--text-primary);
   font-weight: 600;
 
   &:hover {
-    background: rgba(245, 242, 240, 0.08);
-    border-color: var(--text-primary);
-    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: #ffffff;
+    color: #ffffff;
   }
 }
 
 .btn-outline-rose {
-  border: 1.5px solid var(--rose);
-  color: var(--rose);
-  font-weight: 600;
+  border: 1.5px solid #ffffff;
+  color: #ffffff;
+  font-weight: 700;
 
   &:hover {
-    background: var(--rose);
-    color: #1a1010;
+    background: #ffffff;
+    color: #000000 !important;
   }
 }
 
@@ -107,7 +108,7 @@
 
   &:hover {
     background: var(--bg-elevated);
-    color: var(--text-primary);
+    color: #ffffff;
     border-color: var(--border-rose);
   }
 }
@@ -126,13 +127,13 @@
 // ==========================================================================
 .search-input-group {
   .input-group-text {
-    background-color: var(--bg-base) !important;
+    background-color: var(--bg-surface) !important;
     border-color: var(--border-subtle) !important;
-    color: var(--rose) !important;
+    color: #ffffff !important;
   }
 
   .form-control {
-    background-color: var(--bg-base) !important;
+    background-color: var(--bg-surface) !important;
     border-color: var(--border-subtle) !important;
     color: var(--text-primary) !important;
 
@@ -141,8 +142,8 @@
     }
 
     &:focus {
-      border-color: var(--rose) !important;
-      box-shadow: 0 0 0 0.25rem rgba(201, 138, 148, 0.25);
+      border-color: #ffffff !important;
+      box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
     }
   }
 }
@@ -162,7 +163,7 @@
   &:hover {
     transform: translateY(-4px);
     border-color: var(--border-rose) !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
   }
 }
 
@@ -189,12 +190,12 @@
   left: 12px;
   padding: 6px 12px;
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  background: rgba(18, 18, 18, 0.85) !important;
-  color: var(--rose) !important;
-  border: 1px solid var(--border-rose);
+  letter-spacing: 0.04em;
+  background: rgba(0, 0, 0, 0.9) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.35);
   backdrop-filter: blur(4px);
 }
 
@@ -207,7 +208,7 @@
 }
 
 // ==========================================================================
-// EDITORIAL DETAIL PAGE STYLING (Sangat Mudah Dibaca)
+// EDITORIAL DETAIL PAGE STYLING
 // ==========================================================================
 .article-detail-view {
   max-width: 900px;
@@ -219,6 +220,7 @@
 
   .article-headline {
     color: var(--text-primary);
+    font-weight: 800;
     line-height: 1.25;
     letter-spacing: -0.01em;
   }
@@ -256,8 +258,8 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    color: var(--gold);
-    font-weight: 700;
+    color: #ffffff;
+    font-weight: 800;
     margin-top: 2.25rem;
     margin-bottom: 1rem;
     line-height: 1.3;
@@ -265,7 +267,7 @@
 
   h2 {
     font-size: 1.6rem;
-    border-left: 3px solid var(--rose);
+    border-left: 3px solid #ffffff;
     padding-left: 0.75rem;
   }
 
@@ -285,10 +287,10 @@
   }
 
   blockquote {
-    border-left: 4px solid var(--rose);
+    border-left: 4px solid #ffffff;
     padding: 1rem 1.25rem;
     margin: 1.75rem 0;
-    color: var(--text-primary);
+    color: #ffffff;
     font-style: italic;
     background: var(--bg-surface);
     border-radius: 0 12px 12px 0;
@@ -300,15 +302,15 @@
     height: auto;
     border-radius: 16px;
     margin: 2rem 0;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
-    border: 1px solid var(--border-rose);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--border-subtle);
     display: block;
     margin-left: auto;
     margin-right: auto;
   }
 
   strong, b {
-    color: var(--text-primary);
+    color: #ffffff;
     font-weight: 700;
   }
 }

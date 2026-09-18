@@ -8,6 +8,7 @@ import { News } from '../../../models/news.model';
 import { Product } from '../../../models/product.model';
 import { Vendor } from '../../../models/vendor.model';
 import { PublicService } from '../../../services/public.service';
+import { SeoService } from '../../../services/seo.service';
 
 @Component({
   selector: 'app-public-beranda',
@@ -17,6 +18,7 @@ import { PublicService } from '../../../services/public.service';
 })
 export class BerandaPage implements OnInit, ViewWillEnter {
   private readonly publicService = inject(PublicService);
+  private readonly seoService = inject(SeoService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -51,6 +53,34 @@ export class BerandaPage implements OnInit, ViewWillEnter {
 
   loadAllStorefrontData() {
     this.loading = true;
+
+    // Set Meta Tags & Schema.org untuk Beranda
+    this.seoService.updateTags({
+      title: 'Beranda - Makeup Artist & Hairdo Profesional',
+      description:
+        'Noorah Beauty MUA Semarang menyediakan layanan Makeup Artist, Hairdo, Photoshoot Styling, Wedding Makeup, dan Custom Press-on Nails.',
+      type: 'website',
+      keywords: 'MUA Semarang, Makeup Artist Semarang, Hairdo Semarang, Wedding Makeup, Press-on Nails, Noorah Beauty',
+    });
+
+    this.seoService.setBreadcrumbSchema([
+      { name: 'Beranda', url: '/beranda' },
+    ]);
+
+    this.seoService.setJsonLdSchema({
+      '@context': 'https://schema.org',
+      '@type': 'BeautySalon',
+      name: 'Noorah Beauty MUA',
+      description: 'Layanan Makeup Artist, Hairdo, & Custom Press-on Nails Profesional di Semarang.',
+      url: 'https://noorahbeauty.biz.id',
+      telephone: '+6285869187340',
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: 'Semarang',
+        addressRegion: 'Jawa Tengah',
+        addressCountry: 'ID',
+      },
+    });
 
     // Load Profil Toko
     this.publicService.getAbout().subscribe({
