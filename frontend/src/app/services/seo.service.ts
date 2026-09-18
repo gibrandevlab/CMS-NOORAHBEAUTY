@@ -26,7 +26,7 @@ export class SeoService {
   private readonly defaultTitle = 'Noorah Beauty MUA Semarang | Makeup Artist & Hairdo Profesional';
   private readonly defaultDescription =
     'Noorah Beauty MUA Semarang menyediakan layanan Makeup Artist, Hairdo, Photoshoot Styling, Wedding Makeup, dan Custom Press-on Nails.';
-  private readonly defaultImage = 'assets/images/LOGO NB.png';
+  private readonly defaultImage = 'assets/images/logo-nb.png';
   private readonly defaultUrl = 'https://noorahbeauty.biz.id/';
 
   constructor(
